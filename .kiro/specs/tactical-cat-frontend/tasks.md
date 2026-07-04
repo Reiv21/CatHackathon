@@ -6,7 +6,7 @@ This plan implements the REST API server, input validation module, React fronten
 
 ## Tasks
 
-- [ ] 1. Create input validation module and API server foundation
+- [x] 1. Create input validation module and API server foundation
   - [x] 1.1 Create `src/validation.ts` with `sanitizeSearchQuery` and `validateShelterId` functions
     - Implement `sanitizeSearchQuery(raw: string): string` that strips characters outside `[a-zA-Z0-9 \-ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]` and truncates to 100 characters
     - Implement `validateShelterId(raw: string): number | null` that parses as integer, returns null if not positive or exceeds 2,147,483,647
@@ -48,7 +48,7 @@ This plan implements the REST API server, input validation module, React fronten
 - [x] 2. Checkpoint - Backend verification
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 3. Initialize frontend project structure
+- [x] 3. Initialize frontend project structure
   - [x] 3.1 Scaffold `/frontend` Vite + React + TypeScript project
     - Create `/frontend/package.json` with dependencies: react, react-dom, react-leaflet, leaflet, @types/leaflet
     - Create `/frontend/tsconfig.json` for React JSX
@@ -63,7 +63,7 @@ This plan implements the REST API server, input validation module, React fronten
     - Create `/frontend/src/api.ts` fetch wrapper with typed error handling for non-2xx responses
     - _Requirements: 12.3, 12.4_
 
-- [ ] 4. Implement frontend data hooks
+- [x] 4. Implement frontend data hooks
   - [x] 4.1 Create `useShelters` hook (`/frontend/src/hooks/useShelters.ts`)
     - Fetch `/api/shelters` on mount, manage `{ data, loading, error }` state
     - Expose a `retry` function for error recovery
@@ -80,7 +80,7 @@ This plan implements the REST API server, input validation module, React fronten
     - Manage loading/error state
     - _Requirements: 3.1_
 
-- [ ] 5. Implement frontend UI components
+- [x] 5. Implement frontend UI components
   - [x] 5.1 Create `App.tsx` layout shell with dark tactical header
     - Render "Operation Purrfect Storm" title and tactical subtitle
     - Apply dark color palette (background < #1a1a2e), military green and amber accents
@@ -123,7 +123,7 @@ This plan implements the REST API server, input validation module, React fronten
 - [x] 6. Checkpoint - Frontend verification
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Integration, SPA fallback wiring, and documentation
+- [x] 7. Integration, SPA fallback wiring, and documentation
   - [x] 7.1 Wire SPA fallback and static serving in `src/server.ts`
     - Ensure Express serves `/frontend/dist` static files with correct Content-Type
     - Ensure non-API, non-static paths serve `index.html` (SPA fallback)

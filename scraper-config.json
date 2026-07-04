@@ -1,0 +1,271 @@
+{
+  "description": "Per-shelter scraper config. listSelector MUST match only links to individual cat pages.",
+  "sites": {
+    "schroniskobelchatow.pl": {
+      "listSelector": "a[href*='/adopcja,'][href$='.html']",
+      "nameSelector": "h1",
+      "nameCleanRegex": "^\\d+\\s+",
+      "imageSelector": "img[src*='photo/adopcja/']:not([src*='_m.'])",
+      "descSelector": "td p, p"
+    },
+    "schronisko.bialystok.pl": {
+      "listSelector": "a[href*='/do-adopcji/'][href$='.html']",
+      "nameSelector": "h1[itemprop='name']",
+      "nameCleanRegex": "^\\d+-?\\s*",
+      "imageSelector": "img.js-qv-product-cover, img[src*='large_default']",
+      "descSelector": ".product-description p, [itemprop='description'] p"
+    },
+    "schronisko.bielsko-biala.pl": {
+      "listSelector": ".pet-box a[href*='/koty/'], .animal-list a[href]",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img.wp-post-image, .single-pet img, article img[src*='uploads']",
+      "descSelector": ".entry-content p, .pet-description p"
+    },
+    "schronisko.krakow.pl": {
+      "listSelector": "a.animals-s__card-link[href*='/zwierzeta/']",
+      "nameFromAttr": "aria-label",
+      "nameSelector": "title",
+      "nameCleanRegex": "\\s*[–-]\\s*Schronisko.*$",
+      "imageSelector": "img[src*='uploads/'][src*='.jpg']:not([src*='Logo']):not([src*='Vector']):not([width='150'])",
+      "descSelector": ".animal-single__desc p, .entry-content p"
+    },
+    "schronisko.org.pl": {
+      "listSelector": "a[href*='/adopcje/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".fusion-imageframe img, .entry-content img[src*='uploads']",
+      "descSelector": ".entry-content p, .post-content p"
+    },
+    "celestyniaki.pl": {
+      "listSelector": "article a[href*='/zwierzeta/'][href$='/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": "img.img-responsive[src*='uploads'], .entry-content img[src*='uploads']:not([width='1500'])",
+      "descSelector": ".entry-content > p:first-of-type, .entry-content p",
+      "contentScope": ".entry-content"
+    },
+    "przytuliskochojnice.pl": {
+      "listSelector": "a[href*='/zwierzaki/kot/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskochorzow.pl": {
+      "listSelector": ".pet-item a[href], article.post a[href*='/koty/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img[src*='uploads']:not([src*='banner']):not([src*='logo'])",
+      "descSelector": ".entry-content p",
+      "skipPatterns": ["muzykoterapia", "uzykoterapia", "terapia", "aktualności", "blog", "news", "wydarzeni", "nasze koty"]
+    },
+    "schroniskoczestochowa.pl": {
+      "listSelector": "a[href*='/zwierzeta/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image, .pet-image img",
+      "descSelector": ".entry-content p, .pet-description p"
+    },
+    "schroniskopromyk.pl": {
+      "listSelector": "article a[href*='/dzis-trafilem-koty/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "ciapkowo.pl": {
+      "listSelector": "a[href*='/filter/koty/'][href*='-']",
+      "nameSelector": "h1, h2.pet-name",
+      "imageSelector": ".pet-image img, .entry-content img",
+      "descSelector": ".pet-description p, .entry-content p"
+    },
+    "schroniskogniezno.pl": {
+      "listSelector": "article a[href*='/gatunek/kot/'], article a[href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko-katowice.eu": {
+      "listSelector": "a[href*='nasze-koty/'][href*='-']",
+      "nameSelector": "h1, .entry-title",
+      "imageSelector": ".entry-content img[src*='uploads'], article img[src*='uploads']",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko-koszalin.pl": {
+      "listSelector": "article a[href*='/koty-do-adopcji/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.ostrowiec.pl": {
+      "listSelector": "a[href*='koty-do-adopcji'][href$='.html']",
+      "nameSelector": "h1",
+      "imageSelector": "img[src*='photo'], img[src*='images']",
+      "descSelector": "p"
+    },
+    "schronisko-jozefow.pl": {
+      "listSelector": "article a[href*='/nasze-zwierzeta/koty/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskodabrowka.pl": {
+      "listSelector": "article a[href*='/adopcja/zwierzeta/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "oazadlazwierzat.mielec.pl": {
+      "listSelector": "article a[href*='/do-adopcji/koty/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "stowarzyszenienasielsk.pl": {
+      "listSelector": "article a[href*='/koty-do-adopcji/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskoogonki.pl": {
+      "listSelector": "article a[href*='/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "fundacjapsom.pl": {
+      "listSelector": "article a[href*='/zwierzeta/koty-do-adopcji/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskoazorek.pl": {
+      "listSelector": "article a[href*='/do-adopcji/koty-do-adopcji/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskoostroda.pl": {
+      "listSelector": "article a[href*='/adoptuj/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.oswiecim.pl": {
+      "listSelector": "a[href*='/zwierzeta/koty/'][href*='-']",
+      "nameSelector": "h1, .entry-title",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.com": {
+      "listSelector": "a[href*='/zwierzeta/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".fusion-imageframe img, .entry-content img[src*='uploads']",
+      "descSelector": ".entry-content p, .post-content p"
+    },
+    "schronisko.info.pl": {
+      "listSelector": "a[href*='/zwierze/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "zwierzaki.pulawy.pl": {
+      "listSelector": "article a[href*='/adopcje-koty/']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.radom.pl": {
+      "listSelector": "article a[href*='/kot/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "skierniewiceschronisko.pl": {
+      "listSelector": "a[href*='category'][href*='KOT']",
+      "nameSelector": "h1, .product-title",
+      "imageSelector": "img[src*='images']",
+      "descSelector": "p, .description"
+    },
+    "schronisko.szczecin.pl": {
+      "listSelector": "article a[href*='/zwierzeta/'][href*='koty']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "azyl.tarnow.pl": {
+      "listSelector": "article a[href*='/koty-do-adopcji/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.walbrzych.pl": {
+      "listSelector": "a[href*='/portfolio/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko-zielonagora.pl": {
+      "listSelector": "article a[href*='/adopcje/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schronisko.leszno.pl": {
+      "listSelector": "article a[href*='/adopcje/koty-do-adopcji/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "futrzanylos.pl": {
+      "listSelector": "article a[href*='/nasi-podopieczni/koty/'][href*='-']",
+      "nameSelector": "h1.entry-title, h1",
+      "imageSelector": ".entry-content img, .wp-post-image",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskoturek.pl": {
+      "listSelector": "a[href*='adopcja'][href*='kot']",
+      "nameSelector": "h1, .entry-title",
+      "imageSelector": ".entry-content img, article img[src*='uploads']",
+      "descSelector": ".entry-content p"
+    },
+    "schroniskogaj.pl": {
+      "listSelector": "DISABLED_NO_INDIVIDUAL_CAT_PAGES",
+      "nameSelector": "h1",
+      "imageSelector": "img",
+      "descSelector": "p"
+    },
+    "reksio.cdmedia.pl": {
+      "listSelector": "DISABLED_COMPLEX_SITE",
+      "nameSelector": "h1",
+      "imageSelector": "img",
+      "descSelector": "p"
+    },
+    "schroniskokonin.pl": {
+      "listSelector": "DISABLED_COMPLEX_SITE",
+      "nameSelector": "h1",
+      "imageSelector": "img",
+      "descSelector": "p"
+    }
+  },
+  "globalFilters": {
+    "skipNames": [
+      "adopcje", "adopcja", "aktualności", "news", "blog", "kontakt", "o nas",
+      "regulamin", "polityka", "muzykoterapia", "uzykoterapia", "terapia",
+      "dziś jest u nas", "przyjdź adoptuj", "dołącz do nas", "facebook",
+      "instagram", "strona główna", "mapa strony", "archiwum", "wydarzenia",
+      "wolontariat", "darowizna", "zbiórka", "fundacja", "stowarzyszenie",
+      "przekaż 1%", "newsletter", "logowanie", "rejestracja", "koszyk",
+      "szukaj", "cookie", "rodo", "nasze koty", "nasze psy", "wszystkie",
+      "zwierzęta do adopcji", "suczki", "kotki", "procedura adopcji",
+      "adopciaki", "perfekciaki", "za tęczowym mostem", "znalazły dom",
+      "potrzeby na już", "pomoc finansowa", "pomoc materialna",
+      "adoptuj wirtualnie", "zbiórki", "warunki adopcji",
+      "historia schroniska", "nasi pracownicy", "jak możesz pomóc",
+      "galeria", "wybierz gminę", "dokumentacja", "formatowania",
+      "zwierzęta", "dziś trafiły", "nowo przyjęte", "koty do adopcji",
+      "psy do adopcji", "schronisko dla", "witamy w schronisku",
+      "zwierzaki", "twoj tekst", "twój tekst", "data przyjęcia"
+    ],
+    "skipImagePatterns": [
+      "logo", "icon", "banner", "facebook", "instagram", "flag", "social",
+      "accesabar", "reassurance", "graphic/index", "Vector", "call-1", "drafts",
+      "avatar", "placeholder", "spinner", "loading", "arrow", "chevron",
+      "twitter", "youtube", "tiktok", "pinterest", "mapa", "map", "gmina"
+    ]
+  }
+}

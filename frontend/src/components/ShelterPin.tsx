@@ -6,22 +6,15 @@ interface ShelterPinProps {
 }
 
 export function ShelterPin({ shelter }: ShelterPinProps) {
-  // Skip shelters without coordinates
-  if (shelter.latitude === null || shelter.longitude === null) {
-    return null;
-  }
+  if (shelter.latitude === null || shelter.longitude === null) return null;
 
   return (
     <Marker position={[shelter.latitude, shelter.longitude]}>
       <Popup>
-        <div className="font-mono text-gray-900">
-          <p className="font-bold text-sm">{shelter.name}</p>
-          <p className="text-xs text-gray-600">
-            {shelter.city}, {shelter.voivodeship}
-          </p>
-          <p className="text-xs mt-1">
-            <span className="font-bold">{shelter.cat_count}</span> agents stationed
-          </p>
+        <div className="text-sm">
+          <p className="font-bold">{shelter.name}</p>
+          <p className="text-gray-600">{shelter.city}, {shelter.voivodeship}</p>
+          <p className="mt-1 font-medium text-primary-600">{shelter.cat_count} kotów</p>
         </div>
       </Popup>
     </Marker>

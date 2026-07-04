@@ -1,65 +1,56 @@
 import { useState } from "react";
 import { MapView } from "./components/MapView";
 import { CatSearch } from "./components/CatSearch";
+import { Guides } from "./components/Guides";
+import { Home } from "./components/Home";
 
-type Tab = "map" | "search";
+type Page = "home" | "search" | "map" | "guides";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>("search");
+  const [page, setPage] = useState<Page>("home");
 
   return (
-    <div className="min-h-screen bg-tactical-bg text-gray-100 flex flex-col">
-      {/* Header */}
-      <header className="bg-tactical-surface border-b border-tactical-accent px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-mono font-bold text-tactical-amber tracking-wider">
-              Operation Purrfect Storm
-            </h1>
-            <p className="text-sm text-gray-400 font-mono mt-1">
-              Tactical Command Center — World Domination Status
-            </p>
-          </div>
-
-          {/* Tab navigation */}
-          <nav className="flex gap-1 bg-tactical-bg rounded-lg p-1">
-            <button
-              onClick={() => setActiveTab("search")}
-              className={`px-4 py-2 rounded-md font-mono text-sm transition-colors duration-200 ${
-                activeTab === "search"
-                  ? "bg-tactical-accent text-tactical-amber"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              🔍 Agent Search
-            </button>
-            <button
-              onClick={() => setActiveTab("map")}
-              className={`px-4 py-2 rounded-md font-mono text-sm transition-colors duration-200 ${
-                activeTab === "map"
-                  ? "bg-tactical-accent text-tactical-amber"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              🗺️ World Map
-            </button>
+    <div className="min-h-screen bg-cat-cream flex flex-col">
+      <header className="bg-white border-b border-cat-sand sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+          <button onClick={() => setPage("home")} className="flex items-center gap-2">
+            <span className="text-2xl">🐱</span>
+            <span className="text-xl font-display font-bold text-cat-brown">Mrucznik</span>
+          </button>
+          <nav className="flex items-center gap-1">
+            {([
+              ["home", "🏠", "Home"],
+              ["search", "🔍", "Find a Cat"],
+              ["map", "🗺️", "Map"],
+              ["guides", "📖", "Guides"],
+            ] as [Page, string, string][]).map(([id, icon, label]) => (
+              <button
+                key={id}
+                onClick={() => setPage(id)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  page === id ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <span className="hidden sm:inline">{icon} </span>{label}
+              </button>
+            ))}
           </nav>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-hidden">
-        {activeTab === "map" && (
-          <div className="h-[calc(100vh-5rem)]">
-            <MapView />
-          </div>
-        )}
-        {activeTab === "search" && (
-          <div className="h-[calc(100vh-5rem)] overflow-y-auto">
-            <CatSearch />
-          </div>
-        )}
+      <main className="flex-1">
+        {page === "home" && <Home onNavigate={setPage} />}
+        {page === "search" && <CatSearch />}
+        {page === "map" && <div className="h-[calc(100vh-4rem)]"><MapView /></div>}
+        {page === "guides" && <Guides />}
       </main>
+
+      <footer className="bg-cat-dark text-cat-sand py-8 px-4">
+        <div className="max-w-7xl mx-auto text-center text-sm">
+          <p className="mb-2">🐾 Mrucznik — helping cats find homes</p>
+          <p className="text-gray-400">Shelter data updated automatically. Open-source project.</p>
+        </div>
+      </footer>
     </div>
   );
 }

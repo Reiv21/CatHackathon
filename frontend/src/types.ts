@@ -20,6 +20,9 @@ export interface CatResponse {
   shelter_city: string;
   shelter_url: string | null;
   shelter_voivodeship: string | null;
+  sex: string | null;
+  age: string | null;
+  chip: string | null;
 }
 
 export interface ApiError {

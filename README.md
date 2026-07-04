@@ -1,133 +1,114 @@
-# Operation Purrfect Storm 🐱
+# Mrucznik 🐱
 
-## Overview
+**Cat adoption portal** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with adoption guides.
 
-**Wholesome World Domination** — where cats are secret agents conquering territories through adoption. Each shelter is a tactical base, and each cat is an operative deployed in the field. This project tracks their progress across Poland using real shelter data.
+## Features
 
-The Tactical Cat Command Center provides a real-time view of feline deployment status: an interactive map showing all bases (shelters) and their stationed agents (cats), plus a searchable database for locating specific operatives.
+- 🔍 **Search** — find cats by name, city, or shelter
+- 🗺️ **Interactive map** — browse shelters across Poland with cat counts
+- 📖 **Adoption guides** — first cat, home prep, costs, FIV/FeLV info, vet checklist
+- 🤖 **Smart scraping** — config-driven scrapers for 40+ shelter websites
+- ✅ **Auto-validation** — removes junk entries, duplicates, and non-cat results
 
 ## Architecture
 
 ```mermaid
 graph TD
-    subgraph "Scraping Pipeline"
-        T[Temporal.io Server]
-        W[Worker Process]
-        A[Shelter API / Web Scraper]
+    subgraph "Data Pipeline"
+        SC[Scraper v4<br/>Config-driven]
+        VL[Validator<br/>Quality filter]
+        JSON[(data/cats.json<br/>data/shelters.json)]
     end
 
-    subgraph "Data Layer"
-        DB[(SQLite - shelter-sync.db)]
+    subgraph "API Server"
+        EX[Express.js<br/>+ helmet + CORS]
     end
 
-    subgraph "API + Frontend Server"
-        EX[Express.js API Server]
-        S[Static File Server]
+    subgraph "Frontend"
+        FE[React + Vite<br/>TailwindCSS + Leaflet]
     end
 
-    subgraph "Browser"
-        FE[React Frontend<br/>Vite + TailwindCSS + Leaflet]
-    end
-
-    T --> W
-    W --> A
-    A --> DB
-    EX --> DB
+    SC --> VL --> JSON
+    EX --> JSON
     FE --> EX
-    FE --> S
 ```
 
-**Data flow:**
-1. Temporal.io orchestrates scraping workflows on a schedule
-2. The worker fetches shelter listings and cat data from external sources
-3. Data is persisted to a local SQLite database
-4. The Express API server reads from SQLite and exposes REST endpoints
-5. The React frontend fetches data via `/api/*` endpoints and renders the tactical command center
-
-## Technology Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Workflow Engine | Temporal.io |
-| Backend Runtime | Node.js + TypeScript |
-| API Server | Express.js |
-| Database | SQLite (better-sqlite3) |
-| Security | helmet, CORS |
-| Frontend Framework | React 18 |
-| Build Tool | Vite |
-| Styling | TailwindCSS |
-| Map | Leaflet (react-leaflet) |
-| Testing | Vitest + fast-check (property-based) |
-
-## Setup Instructions
-
-### Prerequisites
-
-- Node.js 20+
-- Temporal server (local or cloud)
-
-### 1. Install dependencies
+## Quick Start
 
 ```bash
+# Install dependencies
 npm install
 cd frontend && npm install && cd ..
-```
 
-### 2. Start Temporal server (local dev)
+# Scrape fresh data (takes ~15 min)
+npm run scrape
 
-```bash
-temporal server start-dev
-```
-
-### 3. Start the worker (scraping)
-
-```bash
-npm run worker
-```
-
-### 4. Run the client (trigger scraping)
-
-```bash
-npm run client
-```
-
-### 5. Start the API server
-
-```bash
+# Start API server
 npm run server
-```
 
-### 6. Start frontend dev server
-
-```bash
+# Start frontend dev server (in another terminal)
 cd frontend && npm run dev
 ```
 
-The frontend dev server proxies `/api` calls to `http://localhost:3000`.
+The frontend runs at `http://localhost:5173` with API proxy to port 3000.
 
-### Production build
+## Scripts
 
-```bash
-cd frontend && npm run build
-npm run server
+| Command | Description |
+|---------|-------------|
+| `npm run scrape` | Full pipeline: scrape all shelters + validate |
+| `npm run scrape-only` | Scrape without validation |
+| `npm run validate` | Run validation/cleanup on existing data |
+| `npm run server` | Start Express API server (port 3000) |
+| `npm test` | Run backend tests |
+| `cd frontend && npm run dev` | Frontend dev server |
+| `cd frontend && npm run build` | Production frontend build |
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Scraping | Node.js + Cheerio (config-driven) |
+| API | Express.js + helmet + CORS |
+| Data | JSON files (no database needed) |
+| Frontend | React 18 + Vite + TailwindCSS |
+| Map | Leaflet (react-leaflet) |
+| Testing | Vitest + fast-check |
+| CI | GitHub Actions |
+| Orchestration | Temporal.io (optional, for scheduled scraping) |
+
+## Data Management
+
+Cat and shelter data lives in `data/` as editable JSON files:
+
+- `data/cats.json` — all cats with name, description, image, source URL, metadata
+- `data/shelters.json` — shelters with coordinates, URLs, cat counts
+
+Scraper config in `scraper-config.json` — CSS selectors per shelter domain.
+
+### Adding a new shelter
+
+1. Add entry to `data/shelters.json` with `website_url`
+2. Add CSS selectors to `scraper-config.json` for the domain
+3. Run `npm run scrape`
+
+## Project Structure
+
+```
+├── data/                    # JSON data files (cats, shelters)
+├── frontend/                # React SPA (Vite + TailwindCSS)
+│   └── src/components/      # UI components
+├── src/
+│   ├── server.ts            # Express API server
+│   ├── scraper-v4.ts        # Config-driven scraper
+│   ├── validate-data.ts     # Post-scrape validation
+│   ├── geocoding.ts         # City → coordinates mapping
+│   └── validation.ts        # Input sanitization
+├── scraper-config.json      # Per-site CSS selectors
+├── .github/workflows/ci.yml # GitHub Actions CI
+└── package.json
 ```
 
-The Express server serves the built frontend from `/frontend/dist`.
+## License
 
-## Running Tests
-
-```bash
-# Backend tests (validation, API, property tests)
-npm test
-
-# Frontend tests
-cd frontend && npx vitest --run
-```
-
-## Aikido Security Scan Report
-
-> Placeholder — security scan report will be inserted here after running Aikido analysis.
-
----
-
-*"In the name of cuddles and world peace, deploy all agents."* 🐾
+MIT
