@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "../i18n";
 
 interface Guide {
   id: string;
@@ -7,7 +8,7 @@ interface Guide {
   content: string;
 }
 
-const guides: Guide[] = [
+const guidesEN: Guide[] = [
   {
     id: "first-cat",
     title: "Your First Shelter Cat",
@@ -170,13 +171,20 @@ const guides: Guide[] = [
 ];
 
 export function Guides() {
+  const { lang } = useI18n();
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
+  const guides = guidesEN; // Content is in English; PL UI chrome below
   const active = guides.find((g) => g.id === activeGuide);
+  
+  const title = lang === "pl" ? "Poradnik adopcyjny" : "Adoption Guide";
+  const subtitle = lang === "pl" ? "Wszystko o adopcji kota ze schroniska" : "Everything you need to know about adopting a shelter cat";
+  const clickToRead = lang === "pl" ? "Kliknij aby przeczytać →" : "Click to read →";
+  const backToList = lang === "pl" ? "← Wróć do listy" : "← Back to list";
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-display font-bold text-center mb-2">Adoption Guide</h1>
-      <p className="text-center text-gray-500 mb-8">Everything you need to know about adopting a shelter cat</p>
+      <h1 className="text-3xl font-display font-bold text-center mb-2">{title}</h1>
+      <p className="text-center text-gray-500 mb-8">{subtitle}</p>
 
       {!active ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -184,13 +192,13 @@ export function Guides() {
             <button key={guide.id} onClick={() => setActiveGuide(guide.id)} className="bg-white rounded-2xl p-6 text-left shadow-sm hover:shadow-md transition-shadow border border-cat-sand">
               <div className="text-3xl mb-3">{guide.emoji}</div>
               <h3 className="text-lg font-semibold text-cat-dark">{guide.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">Click to read →</p>
+              <p className="text-sm text-gray-500 mt-1">{clickToRead}</p>
             </button>
           ))}
         </div>
       ) : (
         <div>
-          <button onClick={() => setActiveGuide(null)} className="mb-6 text-primary-600 hover:text-primary-700 font-medium">← Back to list</button>
+          <button onClick={() => setActiveGuide(null)} className="mb-6 text-primary-600 hover:text-primary-700 font-medium">{backToList}</button>
           <article className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-cat-sand">
             <div className="text-4xl mb-4">{active.emoji}</div>
             <h2 className="text-2xl font-display font-bold mb-6">{active.title}</h2>
