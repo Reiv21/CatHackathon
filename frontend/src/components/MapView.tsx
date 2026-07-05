@@ -22,6 +22,7 @@ export function MapView() {
   const { t } = useI18n();
   const { data: shelters, loading, error, retry } = useShelters();
   const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const { data: shelterCats, loading: catsLoading } = useShelterCats(
     selectedShelter?.id_zewnetrzne ?? null
   );
@@ -57,7 +58,16 @@ export function MapView() {
         </MapContainer>
       </div>
 
-      <div className="w-full md:w-80 lg:w-96 bg-white border-t md:border-t-0 md:border-l border-cat-sand overflow-y-auto p-4 max-h-[50vh] md:max-h-none md:h-full">
+      <div className={`${sidebarExpanded ? "fixed inset-0 z-[2000]" : "w-full md:w-80 lg:w-96 max-h-[50vh] md:max-h-none md:h-full"} bg-white border-t md:border-t-0 md:border-l border-cat-sand overflow-y-auto p-4`}>
+        {/* Expand/collapse button */}
+        {selectedShelter && shelterCats && shelterCats.length > 0 && (
+          <button
+            onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            className="mb-2 text-xs text-primary-600 hover:text-primary-700 font-medium"
+          >
+            {sidebarExpanded ? "↙ Minimize" : "↗ Expand"}
+          </button>
+        )}
         {shelters && !selectedShelter && (
           <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
         )}

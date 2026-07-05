@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { CatResponse } from "../types";
 import { useI18n } from "../i18n";
 
@@ -12,14 +13,23 @@ export function truncateDescription(description: string | null): string {
 }
 
 export function CatCard({ cat }: CatCardProps) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const [lightbox, setLightbox] = useState(false);
   const description = truncateDescription(cat.description);
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-cat-sand group">
-      {/* Image */}
-      <div className="w-full h-52 bg-gray-100 overflow-hidden">
-        {cat.image_url ? (
+    <>
+      {/* Lightbox */}
+      {lightbox && cat.image_url && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setLightbox(false)}>
+          <img src={cat.image_url} alt={cat.name} className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-cat-sand group">
+        {/* Image */}
+        <div className="w-full h-52 bg-gray-100 overflow-hidden cursor-pointer" onClick={() => cat.image_url && setLightbox(true)}>
+          {cat.image_url ? (
           <img
             src={cat.image_url}
             alt={cat.name}
@@ -45,12 +55,12 @@ export function CatCard({ cat }: CatCardProps) {
         <div className="flex flex-wrap gap-2 mb-3">
           {cat.sex && (
             <span className="text-xs bg-primary-50 text-primary-700 px-2 py-1 rounded-full">
-              {cat.sex === "samica" ? "♀ samica" : "♂ samiec"}
+              {cat.sex === "samica" ? (lang === "pl" ? "♀ samica" : "♀ female") : (lang === "pl" ? "♂ samiec" : "♂ male")}
             </span>
           )}
           {cat.age && (
             <span className="text-xs bg-warm-50 text-warm-700 px-2 py-1 rounded-full">
-              ur. {cat.age}
+              {lang === "pl" ? "ur." : "born"} {cat.age}
             </span>
           )}
         </div>
@@ -86,5 +96,6 @@ export function CatCard({ cat }: CatCardProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
