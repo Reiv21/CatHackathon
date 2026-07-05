@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
+import L from "leaflet";
 import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
 import { ShelterPin } from "./ShelterPin";
@@ -9,6 +10,17 @@ import { UserLocation } from "./UserLocation";
 import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default marker icons in bundled builds
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 export function MapView() {
   const { t } = useI18n();
