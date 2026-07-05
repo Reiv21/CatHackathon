@@ -18,6 +18,8 @@ jobs:
 
       - run: npm install
       - run: npx vitest --run src/validation.property.test.ts src/server.test.ts src/server.property.test.ts src/server.integration.test.ts
+        env:
+          ADMIN_PASSWORD: test123
 
   test-frontend:
     runs-on: ubuntu-latest

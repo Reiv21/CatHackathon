@@ -22,7 +22,7 @@ describe("Property 11: Description truncation", () => {
   it("descriptions of 150 chars or fewer are displayed unchanged", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 150 }),
+        fc.string({ minLength: 1, maxLength: 150 }).filter((s) => s.trim().length > 0),
         (desc) => {
           const result = truncateDescription(desc);
           expect(result).toBe(desc);

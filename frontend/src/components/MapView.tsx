@@ -4,6 +4,7 @@ import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
 import { ShelterPin } from "./ShelterPin";
 import { CatCard } from "./CatCard";
+import { NearestShelter } from "./NearestShelter";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
 
@@ -51,12 +52,25 @@ export function MapView() {
 
       {/* Sidebar — shelter cats */}
       <div className="w-80 lg:w-96 bg-white border-l border-cat-sand overflow-y-auto p-4 hidden md:block h-full">
-        {!selectedShelter ? (
+        {/* Nearest shelter finder */}
+        {shelters && !selectedShelter && (
+          <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
+        )}
+
+        {!selectedShelter && !shelters && (
           <div className="text-center text-gray-400 py-12">
             <div className="text-4xl mb-3">📍</div>
             <p className="text-sm">Click a shelter on the map to see its cats</p>
           </div>
-        ) : (
+        )}
+
+        {!selectedShelter && shelters && (
+          <div className="text-center text-gray-400 py-6">
+            <p className="text-sm">Click a shelter on the map to see its cats</p>
+          </div>
+        )}
+
+        {selectedShelter && (
           <div>
             <button
               onClick={() => setSelectedShelter(null)}

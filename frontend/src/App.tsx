@@ -5,8 +5,9 @@ import { Guides } from "./components/Guides";
 import { Home } from "./components/Home";
 import { SuggestShelter } from "./components/SuggestShelter";
 import { Admin } from "./components/Admin";
+import { Volunteer } from "./components/Volunteer";
 
-type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin";
+type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer";
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
@@ -25,6 +26,7 @@ export default function App() {
               ["search", "🔍", "Find a Cat"],
               ["map", "🗺️", "Map"],
               ["guides", "📖", "Guides"],
+              ["volunteer", "🙋", "Volunteer"],
               ["suggest", "➕", "Add Shelter"],
             ] as [Page, string, string][]).map(([id, icon, label]) => (
               <button
@@ -47,6 +49,7 @@ export default function App() {
         {page === "map" && <div className="h-[calc(100vh-4rem)] overflow-hidden"><MapView /></div>}
         {page === "guides" && <Guides />}
         {page === "suggest" && <SuggestShelter />}
+        {page === "volunteer" && <Volunteer />}
         {page === "admin" && <Admin />}
       </main>
 
