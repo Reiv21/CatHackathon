@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapView } from "./components/MapView";
 import { CatSearch } from "./components/CatSearch";
 import { Guides } from "./components/Guides";
@@ -10,12 +10,29 @@ import { useI18n } from "./i18n";
 
 type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer";
 
+function getPageFromHash(): Page {
+  const hash = window.location.hash.replace("#", "") || "home";
+  const valid: Page[] = ["home", "search", "map", "guides", "suggest", "admin", "volunteer"];
+  return valid.includes(hash as Page) ? (hash as Page) : "home";
+}
+
 export default function App() {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPageState] = useState<Page>(getPageFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
 
-  const navigate = (p: Page) => { setPage(p); setMenuOpen(false); };
+  const setPage = (p: Page) => {
+    setPageState(p);
+    window.location.hash = p === "home" ? "" : p;
+  };
+
+  useEffect(() => {
+    const onHash = () => setPageState(getPageFromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const navigate = (p: Page) => { setPage(p); setMenuOpen(false); window.scrollTo(0, 0); };
 
   return (
     <div className="min-h-screen bg-cat-cream flex flex-col">
@@ -105,6 +122,13 @@ export default function App() {
         {page === "volunteer" && <Volunteer />}
         {page === "admin" && <Admin />}
       </main>
+
+      {/* Back to top bar (mobile) */}
+      <div className="md:hidden sticky bottom-0 bg-white border-t border-cat-sand py-2 px-4 text-center z-40">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-sm text-primary-600 font-medium">
+          ⬆ {lang === "pl" ? "Na górę" : "Back to top"}
+        </button>
+      </div>
 
       <footer className="bg-cat-dark text-cat-sand py-8 px-4">
         <div className="max-w-7xl mx-auto text-center text-sm">
