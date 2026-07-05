@@ -22,7 +22,7 @@ interface ApiCatsResponse {
   pagination: Pagination;
 }
 
-export function useSearchCats(query: string, voivodeship: string = ""): UseSearchCatsResult {
+export function useSearchCats(query: string, voivodeship: string = "", sex: string = "", sort: string = ""): UseSearchCatsResult {
   const [data, setData] = useState<CatResponse[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export function useSearchCats(query: string, voivodeship: string = ""): UseSearc
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset page when query or voivodeship changes
-  useEffect(() => { setPage(1); }, [query, voivodeship]);
+  useEffect(() => { setPage(1); }, [query, voivodeship, sex, sort]);
 
   const fetchCats = useCallback(async (searchQuery: string, voiv: string, p: number) => {
     setLoading(true);
@@ -42,6 +42,8 @@ export function useSearchCats(query: string, voivodeship: string = ""): UseSearc
       params.set("limit", "24");
       if (searchQuery.length >= 2) params.set("search", searchQuery);
       if (voiv) params.set("voivodeship", voiv);
+      if (sex) params.set("sex", sex);
+      if (sort) params.set("sort", sort);
 
       const result = await apiFetch<ApiCatsResponse>(`/api/cats?${params.toString()}`);
       // Handle both new paginated format and legacy flat array
@@ -57,7 +59,7 @@ export function useSearchCats(query: string, voivodeship: string = ""): UseSearc
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sex, sort]);
 
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -70,7 +72,7 @@ export function useSearchCats(query: string, voivodeship: string = ""): UseSearc
     }, delay);
 
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
-  }, [query, voivodeship, page, fetchCats]);
+  }, [query, voivodeship, page, sex, sort, fetchCats]);
 
   return { data, loading, error, pagination, setPage };
 }

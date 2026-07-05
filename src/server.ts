@@ -176,6 +176,8 @@ export function createApp(dbPath?: string) {
       const rawSearch = (req.query.search as string) || "";
       const search = sanitizeSearchQuery(rawSearch).toLowerCase();
       const voivodeship = (req.query.voivodeship as string) || "";
+      const sex = (req.query.sex as string) || "";
+      const sort = (req.query.sort as string) || "";
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 24));
 
@@ -220,6 +222,20 @@ export function createApp(dbPath?: string) {
         );
       }
 
+      // Sex filter
+      if (sex === "male") {
+        filtered = filtered.filter((c) => c.sex === "samiec");
+      } else if (sex === "female") {
+        filtered = filtered.filter((c) => c.sex === "samica");
+      }
+
+      // Sort
+      if (sort === "name") {
+        filtered.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+      } else if (sort === "city") {
+        filtered.sort((a, b) => a.shelter_city.localeCompare(b.shelter_city, "pl"));
+      }
+
       const total = filtered.length;
       const totalPages = Math.ceil(total / limit);
       const offset = (page - 1) * limit;
@@ -254,6 +270,23 @@ export function createApp(dbPath?: string) {
     } catch (err) {
       next(err);
     }
+  });
+
+  // Random cat
+  app.get("/api/random-cat", (_req, res, next) => {
+    try {
+      const cats = loadCats().filter((c) => c.image_url);
+      if (cats.length === 0) { res.json(null); return; }
+      const index = Math.floor(Math.random() * cats.length);
+      const shelters = loadShelters();
+      const cat = cats[index];
+      const shelter = shelters.find((s) => s.id_zewnetrzne === cat.shelter_id);
+      res.json({
+        ...cat,
+        shelter_url: shelter?.website_url || null,
+        shelter_voivodeship: shelter?.voivodeship || null,
+      });
+    } catch (err) { next(err); }
   });
 
   // POST endpoints need body parser

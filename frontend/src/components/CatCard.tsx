@@ -65,17 +65,25 @@ export function CatCard({ cat }: CatCardProps) {
           <p className="truncate mt-0.5" title={cat.shelter_name}>{cat.shelter_name}</p>
         </div>
 
-        {/* Link */}
-        {(cat.source_url || cat.shelter_url) && (
-          <a
-            href={cat.source_url || cat.shelter_url || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium"
+        {/* Link + Share */}
+        <div className="flex items-center gap-3 mt-3">
+          {(cat.source_url || cat.shelter_url) && (
+            <a href={cat.source_url || cat.shelter_url || "#"} target="_blank" rel="noopener noreferrer"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              {t.viewOnShelter}
+            </a>
+          )}
+          <button
+            onClick={() => {
+              const url = cat.source_url || cat.shelter_url || window.location.href;
+              navigator.clipboard.writeText(url);
+            }}
+            className="text-xs text-gray-400 hover:text-gray-600"
+            title="Share"
           >
-            {t.viewOnShelter}
-          </a>
-        )}
+            📋
+          </button>
+        </div>
       </div>
     </div>
   );
