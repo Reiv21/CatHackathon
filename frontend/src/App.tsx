@@ -124,8 +124,8 @@ export default function App() {
       </main>
 
       {/* Back to top bar (mobile) */}
-      <div className="md:hidden sticky bottom-0 bg-white border-t border-cat-sand py-2 px-4 text-center z-40">
-        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-sm text-primary-600 font-medium">
+      <div className="md:hidden bg-warm-50 border-t border-cat-sand py-4 px-4 text-center">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-sm text-primary-600 font-medium px-6 py-2 bg-white rounded-full border border-cat-sand shadow-sm">
           ⬆ {lang === "pl" ? "Na górę" : "Back to top"}
         </button>
       </div>
