@@ -3,8 +3,10 @@ import { MapView } from "./components/MapView";
 import { CatSearch } from "./components/CatSearch";
 import { Guides } from "./components/Guides";
 import { Home } from "./components/Home";
+import { SuggestShelter } from "./components/SuggestShelter";
+import { Admin } from "./components/Admin";
 
-type Page = "home" | "search" | "map" | "guides";
+type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin";
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
@@ -23,6 +25,7 @@ export default function App() {
               ["search", "🔍", "Find a Cat"],
               ["map", "🗺️", "Map"],
               ["guides", "📖", "Guides"],
+              ["suggest", "➕", "Add Shelter"],
             ] as [Page, string, string][]).map(([id, icon, label]) => (
               <button
                 key={id}
@@ -40,15 +43,20 @@ export default function App() {
 
       <main className="flex-1">
         {page === "home" && <Home onNavigate={setPage} />}
-        {page === "search" && <CatSearch />}
-        {page === "map" && <div className="h-[calc(100vh-4rem)]"><MapView /></div>}
+        {page === "search" && <div className="flex-1 overflow-y-auto"><CatSearch /></div>}
+        {page === "map" && <div className="h-[calc(100vh-4rem)] overflow-hidden"><MapView /></div>}
         {page === "guides" && <Guides />}
+        {page === "suggest" && <SuggestShelter />}
+        {page === "admin" && <Admin />}
       </main>
 
       <footer className="bg-cat-dark text-cat-sand py-8 px-4">
         <div className="max-w-7xl mx-auto text-center text-sm">
           <p className="mb-2">🐾 Mrucznik — helping cats find homes</p>
-          <p className="text-gray-400">Shelter data updated automatically. Open-source project.</p>
+          <p className="text-gray-400 mb-3">Shelter data updated automatically. Open-source project.</p>
+          <button onClick={() => setPage("admin")} className="text-xs text-gray-600 hover:text-gray-400">
+            Admin
+          </button>
         </div>
       </footer>
     </div>

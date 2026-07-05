@@ -1,42 +1,101 @@
+import { useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { useShelters } from "../hooks/useShelters";
+import { useShelterCats } from "../hooks/useShelterCats";
 import { ShelterPin } from "./ShelterPin";
+import { CatCard } from "./CatCard";
+import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
 
 export function MapView() {
   const { data: shelters, loading, error, retry } = useShelters();
+  const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
+  const { data: shelterCats, loading: catsLoading } = useShelterCats(
+    selectedShelter?.id_zewnetrzne ?? null
+  );
 
   return (
-    <div className="relative w-full h-full">
-      {loading && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-[1000]">
-          <div className="text-center">
-            <div className="w-10 h-10 border-3 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-500">Ładuję mapę schronisk...</p>
+    <div className="flex h-full">
+      {/* Map */}
+      <div className="relative flex-1">
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-[1000]">
+            <div className="text-center">
+              <div className="w-10 h-10 border-3 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-gray-500">Loading shelters...</p>
+            </div>
           </div>
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-[1000]">
-          <div className="text-center">
-            <p className="text-red-500 mb-3">Nie udało się załadować mapy</p>
-            <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white rounded-lg">Spróbuj ponownie</button>
+        )}
+        {error && (
+          <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-[1000]">
+            <div className="text-center">
+              <p className="text-red-500 mb-3">Failed to load map</p>
+              <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white rounded-lg">Retry</button>
+            </div>
           </div>
-        </div>
-      )}
-      <MapContainer
-        center={[52.0, 19.0]}
-        zoom={6}
-        className="w-full h-full"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {shelters?.map((shelter) => (
-          <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} />
-        ))}
-      </MapContainer>
+        )}
+        <MapContainer center={[52.0, 19.0]} zoom={6} className="w-full h-full">
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {shelters?.map((shelter) => (
+            <ShelterPin
+              key={shelter.id_zewnetrzne}
+              shelter={shelter}
+              onSelect={() => setSelectedShelter(shelter)}
+            />
+          ))}
+        </MapContainer>
+      </div>
+
+      {/* Sidebar — shelter cats */}
+      <div className="w-80 lg:w-96 bg-white border-l border-cat-sand overflow-y-auto p-4 hidden md:block h-full">
+        {!selectedShelter ? (
+          <div className="text-center text-gray-400 py-12">
+            <div className="text-4xl mb-3">📍</div>
+            <p className="text-sm">Click a shelter on the map to see its cats</p>
+          </div>
+        ) : (
+          <div>
+            <button
+              onClick={() => setSelectedShelter(null)}
+              className="text-sm text-primary-600 hover:text-primary-700 mb-3"
+            >
+              ← Back to map
+            </button>
+            <h3 className="font-display font-bold text-lg mb-1">{selectedShelter.name}</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {selectedShelter.city}, {selectedShelter.voivodeship}
+            </p>
+
+            {catsLoading && (
+              <div className="text-center py-8">
+                <div className="w-6 h-6 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto" />
+              </div>
+            )}
+
+            {!catsLoading && shelterCats && shelterCats.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-gray-400">{shelterCats.length} cats available</p>
+                {shelterCats.map((cat) => (
+                  <CatCard key={cat.id} cat={cat} />
+                ))}
+              </div>
+            )}
+
+            {!catsLoading && shelterCats && shelterCats.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <div className="text-3xl mb-3">🐾</div>
+                <p className="text-sm">No cats listed for this shelter.</p>
+                <p className="text-xs mt-2 text-gray-300">
+                  Not all shelters share their animal data online.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
