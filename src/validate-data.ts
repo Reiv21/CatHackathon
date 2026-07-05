@@ -50,6 +50,24 @@ const junkPatterns = [
   /^\d+[A-Z]$/i, /^\d+[A-Z]\d*$/i,
   /^twoj tekst/i, /twój tekst/i,
   /data przyjęcia/i,
+  /^suki$/i, /^kocury$/i, /^kocięta$/i, /^kocieta$/i,
+  /^kwarantanna$/i, /^znalezione$/i, /^poszukiwane$/i,
+  /psy w fundacji/i, /potrzebna pomoc/i,
+  /zostań domem/i, /pomagają nam/i, /wyszukiwarka/i,
+  /obowiązki gmin/i, /jak zapewnić/i, /zwierzakom komfort/i,
+  /^ur\.\s*\d{4}$/i,
+  /przekaż darowizn/i, /1[,.]5% podatku/i, /^edukacja$/i,
+  /^wybiegalnia$/i, /cmentarz/i, /kremacja/i,
+  /deklaracja dostępności/i, /pomoc rzeczowa/i,
+  /w nowym domu/i, /znalazły dom/i, /za tęczowym/i,
+  // Months/dates as names
+  /^(styczeń|luty|marzec|kwiecień|maj|czerwiec|lipiec|sierpień|wrzesień|październik|listopad|grudzień)\s*,?\s*\d{4}$/i,
+  /^\d{4}$/i, /^(stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|września|października|listopada|grudnia)/i,
+  // Categories
+  /^kozy$/i, /^krowy$/i, /^lisy$/i, /^owce$/i, /^świnie$/i, /^inne$/i, /^konie$/i,
+  /^o schronisku$/i, /^biogram$/i, /^nasze publikacje$/i,
+  /^kot on$/i, /^kot ona$/i,
+  /opublikowane przez/i,
 ];
 
 filtered = filtered.filter((c) => {
@@ -66,8 +84,8 @@ const dogPatterns = [
   /\bsuczka\b/i, /\bsuka\b/i, /\bsunia\b/i, /\bsunka\b/i,
   /\bkundelek\b/i, /\bkundel\b/i,
   /\bszczeni(ak|ę|ąt)/i,
-  /\brocky\b/i, // common dog-only names from shelters
-  /data przyjęcia.*data przyjęcia/i, // bulk entry pattern (Włocławek)
+  /data przyjęcia.*data przyjęcia/i,
+  /\bpsy\b/i, /\bpsiak\b/i,
 ];
 
 filtered = filtered.filter((c) => {
@@ -115,12 +133,4 @@ Object.entries(byCity).sort((a, b) => b[1] - a[1]).forEach(([city, count]) => {
 
 // Save
 writeFileSync("./data/cats.json", JSON.stringify(filtered, null, 2));
-
-// Update shelters
-const shelters = JSON.parse(readFileSync("./data/shelters.json", "utf-8"));
-const updated = shelters.map((s: { id_zewnetrzne: number }) => ({
-  ...s,
-  cat_count: filtered.filter((c) => c.shelter_id === s.id_zewnetrzne).length,
-}));
-writeFileSync("./data/shelters.json", JSON.stringify(updated, null, 2));
 console.log("\n✅ Saved validated data.");

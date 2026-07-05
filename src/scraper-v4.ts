@@ -131,7 +131,7 @@ function extractDetail($: cheerio.CheerioAPI, url: string, siteConf: SiteConfig 
 
   // Fallback: try ANY image on page that's from uploads and not a banner
   if (!image_url) {
-    scope.find("img[src*='uploads'], img[src*='photo'], img[src*='images']").each((_, el) => {
+    $("body").find("img[src*='uploads'], img[src*='photo'], img[src*='images']").each((_, el) => {
       if (image_url) return;
       const $img = $(el);
       const src = $img.attr("data-src") || $img.attr("data-lazy-src") || $img.attr("src");
@@ -287,12 +287,6 @@ async function main() {
   }).map((c, i) => ({ ...c, id: i + 1 }));
 
   writeFileSync("./data/cats.json", JSON.stringify(deduped, null, 2));
-
-  const updated = shelters.map((s) => ({
-    ...s,
-    cat_count: deduped.filter((c) => c.shelter_id === s.id_zewnetrzne).length,
-  }));
-  writeFileSync("./data/shelters.json", JSON.stringify(updated, null, 2));
 
   console.log(`\n✅ ${deduped.length} cats from ${successCount} shelters.`);
 }

@@ -75,10 +75,13 @@ export function createApp(dbPath?: string) {
   app.get("/api/shelters", (_req, res, next) => {
     try {
       const shelters = loadShelters();
+      const cats = loadCats();
       const withCoords = shelters.map((s) => {
         const coords = getCityCoords(s.city);
+        const catCount = cats.filter((c) => c.shelter_id === s.id_zewnetrzne).length;
         return {
           ...s,
+          cat_count: catCount,
           latitude: coords ? coords[0] : null,
           longitude: coords ? coords[1] : null,
         };

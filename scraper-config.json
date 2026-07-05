@@ -30,7 +30,7 @@
       "descSelector": ".animal-single__desc p, .entry-content p"
     },
     "schronisko.org.pl": {
-      "listSelector": "a[href*='/adopcje/koty/'][href*='-']",
+      "listSelector": "a[href*='schronisko.org.pl/20']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".fusion-imageframe img, .entry-content img[src*='uploads']",
       "descSelector": ".entry-content p, .post-content p"
@@ -62,7 +62,7 @@
       "descSelector": ".entry-content p, .pet-description p"
     },
     "schroniskopromyk.pl": {
-      "listSelector": "article a[href*='/dzis-trafilem-koty/']",
+      "listSelector": "a[href*='schroniskopromyk.pl/']:not([href*='category']):not([href*='author']):not([href*='#'])",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
@@ -158,7 +158,7 @@
       "descSelector": ".entry-content p, .post-content p"
     },
     "schronisko.info.pl": {
-      "listSelector": "a[href*='/zwierze/'][href*='-']",
+      "listSelector": "a[href*='/zwierzak/']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
@@ -170,7 +170,7 @@
       "descSelector": ".entry-content p"
     },
     "schronisko.radom.pl": {
-      "listSelector": "article a[href*='/kot/'][href*='-']",
+      "listSelector": "a[href*='/kot/']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
@@ -188,7 +188,7 @@
       "descSelector": ".entry-content p"
     },
     "azyl.tarnow.pl": {
-      "listSelector": "article a[href*='/koty-do-adopcji/'][href*='-']",
+      "listSelector": "a[href*='/zwierzeta/']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
@@ -200,7 +200,7 @@
       "descSelector": ".entry-content p"
     },
     "schronisko-zielonagora.pl": {
-      "listSelector": "article a[href*='/adopcje/'][href*='-']",
+      "listSelector": "a[href*='/zwierzak/']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
@@ -212,7 +212,7 @@
       "descSelector": ".entry-content p"
     },
     "futrzanylos.pl": {
-      "listSelector": "article a[href*='/nasi-podopieczni/koty/'][href*='-']",
+      "listSelector": "a[href*='futrzanylos.pl/20']",
       "nameSelector": "h1.entry-title, h1",
       "imageSelector": ".entry-content img, .wp-post-image",
       "descSelector": ".entry-content p"
