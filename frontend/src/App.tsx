@@ -17,14 +17,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cat-cream flex flex-col">
       <header className="bg-white border-b border-cat-sand sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
           <button onClick={() => setPage("home")} className="flex items-center gap-2">
-            <span className="text-2xl">🐱</span>
-            <span className="text-xl font-display font-bold text-cat-brown">Mrucznik</span>
+            <span className="text-xl sm:text-2xl">🐱</span>
+            <span className="text-lg sm:text-xl font-display font-bold text-cat-brown">Mrucznik</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <nav className="flex items-center gap-1">
+          <div className="flex items-center gap-1">
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-1">
               {([
                 ["home", t.home],
                 ["search", t.findCat],
@@ -45,13 +46,33 @@ export default function App() {
               ))}
             </nav>
 
-            {/* Language toggle */}
+            {/* Mobile nav */}
+            <nav className="flex md:hidden items-center gap-0.5">
+              {([
+                ["home", "🏠"],
+                ["search", "🔍"],
+                ["map", "🗺️"],
+                ["guides", "📖"],
+                ["volunteer", "🙋"],
+                ["suggest", "➕"],
+              ] as [Page, string][]).map(([id, icon]) => (
+                <button
+                  key={id}
+                  onClick={() => setPage(id)}
+                  className={`p-2 rounded-lg text-lg transition-colors ${
+                    page === id ? "bg-primary-100" : "hover:bg-gray-100"
+                  }`}
+                >
+                  {icon}
+                </button>
+              ))}
+            </nav>
+
             <button
               onClick={() => setLang(lang === "en" ? "pl" : "en")}
-              className="ml-2 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50 transition-colors"
-              title={lang === "en" ? "Switch to Polish" : "Przełącz na angielski"}
+              className="ml-1 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50"
             >
-              {lang === "en" ? "🇵🇱 PL" : "🇬🇧 EN"}
+              {lang === "en" ? "🇵🇱" : "🇬🇧"}
             </button>
           </div>
         </div>

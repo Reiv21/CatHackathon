@@ -83,8 +83,13 @@ export function createApp(dbPath?: string) {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'none'"],
-          frameAncestors: ["'none'"],
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "https:", "http:"],
+          connectSrc: ["'self'"],
+          frameSrc: ["'none'"],
         },
       },
     })

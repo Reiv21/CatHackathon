@@ -19,8 +19,8 @@ export function MapView() {
   );
 
   return (
-    <div className="flex h-full">
-      <div className="relative flex-1">
+    <div className="flex flex-col md:flex-row h-full">
+      <div className="relative flex-1 min-h-[50vh] md:min-h-0">
         {loading && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-[1000]">
             <div className="text-center">
@@ -49,7 +49,7 @@ export function MapView() {
         </MapContainer>
       </div>
 
-      <div className="w-80 lg:w-96 bg-white border-l border-cat-sand overflow-y-auto p-4 hidden md:block h-full">
+      <div className="w-full md:w-80 lg:w-96 bg-white border-t md:border-t-0 md:border-l border-cat-sand overflow-y-auto p-4 max-h-[50vh] md:max-h-none md:h-full">
         {shelters && !selectedShelter && (
           <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
         )}
