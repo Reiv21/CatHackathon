@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchCats } from "../hooks/useSearchCats";
 import { CatCard } from "./CatCard";
+import { useI18n } from "../i18n";
 
 const VOIVODESHIPS = [
   "", "dolnoslaskie", "kujawsko-pomorskie", "lodzkie", "lubelskie", "lubuskie",
@@ -33,12 +34,13 @@ export function CatSearch() {
   const [query, setQuery] = useState("");
   const [voivodeship, setVoivodeship] = useState("");
   const { data: cats, loading, error, pagination, setPage } = useSearchCats(query, voivodeship);
+  const { t } = useI18n();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-display font-bold mb-2">Find your cat 🔍</h1>
-        <p className="text-gray-500">Search by name, city, or shelter</p>
+        <h1 className="text-3xl font-display font-bold mb-2">{t.searchTitle}</h1>
+        <p className="text-gray-500">{t.searchSubtitle}</p>
       </div>
 
       {/* Search + Filter */}
@@ -48,7 +50,7 @@ export function CatSearch() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a cat name or city..."
+            placeholder={t.searchPlaceholder}
             className="w-full bg-white border border-cat-sand rounded-xl pl-12 pr-10 py-3 text-cat-dark placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all"
           />
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

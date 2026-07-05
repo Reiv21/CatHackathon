@@ -5,6 +5,7 @@ import { useShelterCats } from "../hooks/useShelterCats";
 import { ShelterPin } from "./ShelterPin";
 import { CatCard } from "./CatCard";
 import { NearestShelter } from "./NearestShelter";
+import { UserLocation } from "./UserLocation";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
 
@@ -40,6 +41,7 @@ export function MapView() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <UserLocation />
           {shelters?.map((shelter) => (
             <ShelterPin
               key={shelter.id_zewnetrzne}
