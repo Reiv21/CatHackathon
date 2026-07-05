@@ -1,4 +1,5 @@
 import type { CatResponse } from "../types";
+import { useI18n } from "../i18n";
 
 interface CatCardProps {
   cat: CatResponse;
@@ -11,6 +12,7 @@ export function truncateDescription(description: string | null): string {
 }
 
 export function CatCard({ cat }: CatCardProps) {
+  const { t } = useI18n();
   const description = truncateDescription(cat.description);
 
   return (
@@ -71,7 +73,7 @@ export function CatCard({ cat }: CatCardProps) {
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
-            Zobacz na stronie schroniska →
+            {t.viewOnShelter}
           </a>
         )}
       </div>

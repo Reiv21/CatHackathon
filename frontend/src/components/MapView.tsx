@@ -6,10 +6,12 @@ import { ShelterPin } from "./ShelterPin";
 import { CatCard } from "./CatCard";
 import { NearestShelter } from "./NearestShelter";
 import { UserLocation } from "./UserLocation";
+import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
 
 export function MapView() {
+  const { t } = useI18n();
   const { data: shelters, loading, error, retry } = useShelters();
   const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
   const { data: shelterCats, loading: catsLoading } = useShelterCats(
@@ -18,21 +20,20 @@ export function MapView() {
 
   return (
     <div className="flex h-full">
-      {/* Map */}
       <div className="relative flex-1">
         {loading && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-[1000]">
             <div className="text-center">
               <div className="w-10 h-10 border-3 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-gray-500">Loading shelters...</p>
+              <p className="text-gray-500">{t.loadingShelters}</p>
             </div>
           </div>
         )}
         {error && (
           <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-[1000]">
             <div className="text-center">
-              <p className="text-red-500 mb-3">Failed to load map</p>
-              <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white rounded-lg">Retry</button>
+              <p className="text-red-500 mb-3">{t.failedMap}</p>
+              <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white rounded-lg">{t.retry}</button>
             </div>
           </div>
         )}
@@ -43,47 +44,29 @@ export function MapView() {
           />
           <UserLocation />
           {shelters?.map((shelter) => (
-            <ShelterPin
-              key={shelter.id_zewnetrzne}
-              shelter={shelter}
-              onSelect={() => setSelectedShelter(shelter)}
-            />
+            <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
           ))}
         </MapContainer>
       </div>
 
-      {/* Sidebar — shelter cats */}
       <div className="w-80 lg:w-96 bg-white border-l border-cat-sand overflow-y-auto p-4 hidden md:block h-full">
-        {/* Nearest shelter finder */}
         {shelters && !selectedShelter && (
           <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
         )}
 
-        {!selectedShelter && !shelters && (
-          <div className="text-center text-gray-400 py-12">
-            <div className="text-4xl mb-3">📍</div>
-            <p className="text-sm">Click a shelter on the map to see its cats</p>
-          </div>
-        )}
-
-        {!selectedShelter && shelters && (
+        {!selectedShelter && (
           <div className="text-center text-gray-400 py-6">
-            <p className="text-sm">Click a shelter on the map to see its cats</p>
+            <p className="text-sm">{t.clickShelter}</p>
           </div>
         )}
 
         {selectedShelter && (
           <div>
-            <button
-              onClick={() => setSelectedShelter(null)}
-              className="text-sm text-primary-600 hover:text-primary-700 mb-3"
-            >
-              ← Back to map
+            <button onClick={() => setSelectedShelter(null)} className="text-sm text-primary-600 hover:text-primary-700 mb-3">
+              {t.backToMap}
             </button>
             <h3 className="font-display font-bold text-lg mb-1">{selectedShelter.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {selectedShelter.city}, {selectedShelter.voivodeship}
-            </p>
+            <p className="text-sm text-gray-500 mb-4">{selectedShelter.city}, {selectedShelter.voivodeship}</p>
 
             {catsLoading && (
               <div className="text-center py-8">
@@ -93,20 +76,16 @@ export function MapView() {
 
             {!catsLoading && shelterCats && shelterCats.length > 0 && (
               <div className="flex flex-col gap-3">
-                <p className="text-xs text-gray-400">{shelterCats.length} cats available</p>
-                {shelterCats.map((cat) => (
-                  <CatCard key={cat.id} cat={cat} />
-                ))}
+                <p className="text-xs text-gray-400">{shelterCats.length} {t.catsAvailable}</p>
+                {shelterCats.map((cat) => <CatCard key={cat.id} cat={cat} />)}
               </div>
             )}
 
             {!catsLoading && shelterCats && shelterCats.length === 0 && (
               <div className="text-center py-8 text-gray-400">
                 <div className="text-3xl mb-3">🐾</div>
-                <p className="text-sm">No cats listed for this shelter.</p>
-                <p className="text-xs mt-2 text-gray-300">
-                  Not all shelters share their animal data online.
-                </p>
+                <p className="text-sm">{t.noCatsListed}</p>
+                <p className="text-xs mt-2 text-gray-300">{t.notAllShelters}</p>
               </div>
             )}
           </div>

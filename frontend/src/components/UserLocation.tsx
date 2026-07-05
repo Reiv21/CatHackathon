@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMap, CircleMarker, Popup } from "react-leaflet";
+import { useI18n } from "../i18n";
 
 export function UserLocation() {
+  const { t } = useI18n();
   const map = useMap();
   const [position, setPosition] = useState<[number, number] | null>(null);
 
@@ -27,7 +29,7 @@ export function UserLocation() {
       pathOptions={{ color: "#e06050", fillColor: "#e06050", fillOpacity: 0.7, weight: 2 }}
     >
       <Popup>
-        <p className="text-sm font-medium">📍 You are here</p>
+        <p className="text-sm font-medium">{t.youAreHere}</p>
       </Popup>
     </CircleMarker>
   );

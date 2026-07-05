@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ShelterResponse } from "../types";
+import { useI18n } from "../i18n";
 
 interface NearestShelterProps {
   shelters: ShelterResponse[];
@@ -20,6 +21,7 @@ function isInPoland(lat: number, lon: number): boolean {
 }
 
 export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error" | "outside">("idle");
   const [results, setResults] = useState<{ shelter: ShelterResponse; distance: number }[]>([]);
   const [onlyWithCats, setOnlyWithCats] = useState(false);
@@ -57,7 +59,7 @@ export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
 
   return (
     <div className="bg-white rounded-xl border border-cat-sand p-4 mb-4">
-      <h3 className="font-semibold text-sm mb-3">📍 Find nearest shelter</h3>
+      <h3 className="font-semibold text-sm mb-3">{t.findNearest}</h3>
 
       <div className="flex items-center gap-3 mb-3">
         <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
@@ -67,24 +69,24 @@ export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
             onChange={(e) => setOnlyWithCats(e.target.checked)}
             className="rounded border-gray-300"
           />
-          Only shelters with cats listed
+          {t.onlyWithCats}
         </label>
       </div>
 
       {status === "idle" && (
         <button onClick={findNearest} className="w-full px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors">
-          Use my location
+          {t.useLocation}
         </button>
       )}
 
-      {status === "loading" && <p className="text-sm text-gray-400">Getting your location...</p>}
-      {status === "error" && <p className="text-sm text-red-500">Location access denied. Enable it in browser settings.</p>}
+      {status === "loading" && <p className="text-sm text-gray-400">{t.gettingLocation}</p>}
+      {status === "error" && <p className="text-sm text-red-500">{t.locationDenied}</p>}
 
       {status === "outside" && (
         <div className="text-center py-3">
-          <p className="text-sm text-gray-600">😅 Looks like you're not in Poland!</p>
-          <p className="text-xs text-gray-400 mt-1">This app covers Polish shelters only. But thanks for caring about cats!</p>
-          <button onClick={() => setStatus("idle")} className="text-xs text-primary-600 mt-2">Try again</button>
+          <p className="text-sm text-gray-600">{t.outsidePoland}</p>
+          <p className="text-xs text-gray-400 mt-1">{t.outsidePolandDesc}</p>
+          <button onClick={() => setStatus("idle")} className="text-xs text-primary-600 mt-2">{t.tryAgain}</button>
         </div>
       )}
 
@@ -98,12 +100,12 @@ export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
             >
               <p className="text-sm font-medium">{shelter.name}</p>
               <p className="text-xs text-gray-500">
-                {shelter.city} • {Math.round(distance)} km away
-                {shelter.cat_count > 0 && <span className="text-primary-600 ml-2">🐱 {shelter.cat_count} cats</span>}
+                {shelter.city} • {Math.round(distance)} {t.kmAway}
+                {shelter.cat_count > 0 && <span className="text-primary-600 ml-2">🐱 {shelter.cat_count} {t.cats}</span>}
               </p>
             </button>
           ))}
-          <button onClick={() => setStatus("idle")} className="text-xs text-gray-400 mt-1">Search again</button>
+          <button onClick={() => setStatus("idle")} className="text-xs text-gray-400 mt-1">{t.searchAgain}</button>
         </div>
       )}
     </div>
