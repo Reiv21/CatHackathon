@@ -31,6 +31,7 @@ export default function App() {
                 ["map", t.map],
                 ["guides", t.guides],
                 ["volunteer", t.volunteer],
+                ["suggest", t.addShelter],
               ] as [Page, string][]).map(([id, label]) => (
                 <button
                   key={id}

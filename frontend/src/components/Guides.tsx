@@ -170,10 +170,124 @@ const guidesEN: Guide[] = [
   },
 ];
 
+const guidesPL: Guide[] = [
+  { id: "first-cat", title: "Pierwszy kot ze schroniska", emoji: "🏠", content: `Adopcja kota ze schroniska to piękna decyzja. Oto co musisz wiedzieć:
+
+**Przed wizytą w schronisku:**
+• Zastanów się czy masz czas i przestrzeń na kota
+• Upewnij się, że domownicy nie mają alergii
+• Sprawdź czy właściciel/spółdzielnia pozwala na zwierzęta
+
+**W schronisku:**
+• Nie spiesz się — porozmawiaj z opiekunami o charakterze kota
+• Zapytaj o historię zdrowotną i zachowania
+• Zwróć uwagę na kota, który sam się do Ciebie zbliży
+
+**Procedura adopcji:**
+• Wypełnisz ankietę adopcyjną
+• Podpiszesz umowę adopcyjną
+• Zapłacisz symboliczną opłatę (50-200 zł)
+• Zabierzesz kota w transporterze` },
+  { id: "prepare-home", title: "Przygotowanie domu", emoji: "🛋️", content: `Zanim kot wejdzie do domu, przygotuj:
+
+**Niezbędne:**
+• Kuweta + żwirek (1 na kota + 1 zapasowa)
+• Miski na wodę i jedzenie (ceramiczne lub metalowe)
+• Karma mokra + sucha
+• Drapak (im wyższy tym lepiej, stabilny)
+• Transporter (na wizyty u weta)
+
+**Warto mieć:**
+• Legowisko lub koc w spokojnym miejscu
+• Zabawki (wędka, piłeczki)
+• Szczotka do wyczesywania
+
+**Zabezpiecz:**
+• Okna — siatki to absolutna konieczność!
+• Rośliny trujące (lilie, filodendron, bluszcz)
+• Małe przedmioty do połknięcia` },
+  { id: "first-days", title: "Pierwsze dni w domu", emoji: "📅", content: `Adaptacja kota wymaga cierpliwości.
+
+**Dzień 1-3: "Pokój bezpieczny"**
+• Zamknij kota w jednym pokoju z kuwetą i jedzeniem
+• Nie zmuszaj do kontaktu
+• Mów spokojnym głosem
+
+**Dzień 3-7: Eksploracja**
+• Pozwól kotu samemu zwiedzać
+• Nie goń, nie łap na siłę
+• Brak apetytu 1-2 dni to norma przy stresie
+
+**Tydzień 2-4: Budowanie zaufania**
+• Baw się wędką (najlepszy sposób na więź)
+• Pozwól kotu przyjść do Ciebie
+
+**Kiedy się niepokoić:**
+• Nie je 48h+ → weterynarz
+• Krew w moczu → pilnie do weta
+• Agresja → behawiorysta` },
+  { id: "costs", title: "Koszty utrzymania kota", emoji: "💰", content: `Realistyczny budżet miesięczny to 150-400 zł.
+
+**Miesięczne (150-300 zł):**
+• Karma mokra: 80-200 zł
+• Karma sucha: 30-80 zł
+• Żwirek: 30-60 zł
+
+**Roczne:**
+• Wizyta kontrolna: 100-200 zł
+• Szczepienie: 80-150 zł/rok
+• Odrobaczanie: 30-50 zł/kwartał
+
+**Na start:**
+• Kuweta: 30-150 zł
+• Drapak: 80-300 zł
+• Transporter: 50-150 zł
+
+**Tip:** Nie oszczędzaj na karmie. Dobra karma = mniej wizyt u weta.` },
+  { id: "fiv-felv", title: "Koty FIV+ i FeLV+", emoji: "🩺", content: `FIV i FeLV to wirusy, ale NIE oznaczają wyroku śmierci!
+
+**FIV:**
+• Odpowiednik HIV u ludzi, NIE przenosi się na ludzi
+• Kot z FIV może żyć 10+ lat
+• Przenosi się przez głębokie ugryzienia
+• Wymaga: regularne kontrole, dobra karma
+
+**FeLV:**
+• Poważniejszy, ale wciąż nie wyrok
+• Przenosi się przez ślinę
+• Kot powinien być jedynym lub z innymi FeLV+
+
+**Dlaczego warto adoptować:**
+• Najtrudniej znajdują dom
+• Są tak samo kochające
+• Przy dobrej opiece żyją długo` },
+  { id: "vet-checklist", title: "Kiedy do weterynarza", emoji: "🚨", content: `**PILNE — jedź natychmiast:**
+• Nie oddaje moczu 12h+ (zwłaszcza kocur!)
+• Krew w moczu
+• Trudności z oddychaniem
+• Drgawki, zatrucie
+• Nie je 48h+
+
+**W ciągu 24h:**
+• Biegunka z krwią
+• Wielokrotne wymioty
+• Gorączka, kulawizna
+
+**Planowana wizyta:**
+• Kichanie > 3 dni
+• Zmiana apetytu/wagi
+• Nagła zmiana zachowania
+• Problemy z sierścią
+
+**Rutynowo (1x rok):**
+• Badanie ogólne + szczepienie
+• Kontrola zębów + odrobaczanie` },
+];
+
 export function Guides() {
   const { lang } = useI18n();
   const [activeGuide, setActiveGuide] = useState<string | null>(null);
-  const guides = guidesEN; // Content is in English; PL UI chrome below
+  const guides = lang === "pl" ? guidesPL : guidesEN;
   const active = guides.find((g) => g.id === activeGuide);
   
   const title = lang === "pl" ? "Poradnik adopcyjny" : "Adoption Guide";

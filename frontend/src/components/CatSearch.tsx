@@ -82,7 +82,8 @@ export function CatSearch() {
         <div className="flex flex-wrap gap-2">
           <select value={voivodeship} onChange={(e) => setVoivodeship(e.target.value)}
             className="bg-white border border-cat-sand rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200">
-            {VOIVODESHIPS.map((v) => <option key={v} value={v}>{VOIV_LABELS[v]}</option>)}
+            <option value="">{t.allRegions}</option>
+            {VOIVODESHIPS.filter(v => v).map((v) => <option key={v} value={v}>{VOIV_LABELS[v]}</option>)}
           </select>
 
           <select value={sex} onChange={(e) => setSex(e.target.value)}
