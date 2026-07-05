@@ -60,7 +60,7 @@ export function CatCard({ cat }: CatCardProps) {
           )}
           {cat.age && (
             <span className="text-xs bg-warm-50 text-warm-700 px-2 py-1 rounded-full">
-              {lang === "pl" ? "ur." : "born"} {cat.age}
+              {lang === "pl" ? `ur. ${cat.age}` : `age: ${cat.age.replace(" lat", " yrs").replace(" mies", " mo")}`}
             </span>
           )}
         </div>

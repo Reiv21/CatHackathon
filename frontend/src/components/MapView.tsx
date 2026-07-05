@@ -7,6 +7,7 @@ import { ShelterPin } from "./ShelterPin";
 import { CatCard } from "./CatCard";
 import { NearestShelter } from "./NearestShelter";
 import { UserLocation } from "./UserLocation";
+import { MapPersist } from "./MapPersist";
 import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
@@ -52,6 +53,7 @@ export function MapView() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <UserLocation />
+          <MapPersist />
           {shelters?.map((shelter) => (
             <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
           ))}
