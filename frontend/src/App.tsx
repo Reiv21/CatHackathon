@@ -12,20 +12,23 @@ type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunt
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
+  const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
+
+  const navigate = (p: Page) => { setPage(p); setMenuOpen(false); };
 
   return (
     <div className="min-h-screen bg-cat-cream flex flex-col">
       <header className="bg-white border-b border-cat-sand sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
-          <button onClick={() => setPage("home")} className="flex items-center gap-2">
+          <button onClick={() => navigate("home")} className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl">🐱</span>
             <span className="text-lg sm:text-xl font-display font-bold text-cat-brown">Mrucznik</span>
           </button>
 
-          <div className="flex items-center gap-1">
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-1">
+            <nav className="flex items-center gap-1">
               {([
                 ["home", t.home],
                 ["search", t.findCat],
@@ -36,7 +39,7 @@ export default function App() {
               ] as [Page, string][]).map(([id, label]) => (
                 <button
                   key={id}
-                  onClick={() => setPage(id)}
+                  onClick={() => navigate(id)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     page === id ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"
                   }`}
@@ -45,37 +48,52 @@ export default function App() {
                 </button>
               ))}
             </nav>
+            <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
+              className="ml-2 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50">
+              {lang === "en" ? "🇵🇱 PL" : "🇬🇧 EN"}
+            </button>
+          </div>
 
-            {/* Mobile nav */}
-            <nav className="flex md:hidden items-center gap-0.5">
-              {([
-                ["home", "🏠"],
-                ["search", "🔍"],
-                ["map", "🗺️"],
-                ["guides", "📖"],
-                ["volunteer", "🙋"],
-                ["suggest", "➕"],
-              ] as [Page, string][]).map(([id, icon]) => (
-                <button
-                  key={id}
-                  onClick={() => setPage(id)}
-                  className={`p-2 rounded-lg text-lg transition-colors ${
-                    page === id ? "bg-primary-100" : "hover:bg-gray-100"
-                  }`}
-                >
-                  {icon}
-                </button>
-              ))}
-            </nav>
-
-            <button
-              onClick={() => setLang(lang === "en" ? "pl" : "en")}
-              className="ml-1 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50"
-            >
+          {/* Mobile: lang + hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
+              className="px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg">
               {lang === "en" ? "🇵🇱" : "🇬🇧"}
+            </button>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-lg hover:bg-gray-100">
+              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {menuOpen
+                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                }
+              </svg>
             </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <nav className="md:hidden border-t border-cat-sand bg-white px-4 py-2 space-y-1">
+            {([
+              ["home", t.home],
+              ["search", t.findCat],
+              ["map", t.map],
+              ["guides", t.guides],
+              ["volunteer", t.volunteer],
+              ["suggest", t.addShelter],
+            ] as [Page, string][]).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => navigate(id)}
+                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  page === id ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main className="flex-1">
