@@ -95,6 +95,7 @@ export function createApp(dbPath?: string) {
           frameSrc: ["'none'"],
         },
       },
+      referrerPolicy: { policy: "no-referrer-when-downgrade" },
     })
   );
 
