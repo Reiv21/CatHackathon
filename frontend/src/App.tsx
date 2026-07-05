@@ -139,6 +139,7 @@ export default function App() {
               {lang === "pl" ? "⬆ Na górę" : "⬆ Back to top"}
             </button>
             <button onClick={() => navigate("suggest")} className="hover:text-gray-400">{t.addShelter}</button>
+            <a href="https://github.com/Reiv21/CatHackathon" target="_blank" rel="noreferrer" className="hover:text-gray-400">GitHub</a>
             <button onClick={() => navigate("admin")} className="hover:text-gray-400">Admin</button>
           </div>
         </div>

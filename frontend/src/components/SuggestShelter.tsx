@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useI18n } from "../i18n";
 
 export function SuggestShelter() {
+  const { t, lang } = useI18n();
   const [form, setForm] = useState({ name: "", city: "", voivodeship: "", website_url: "", submitter_email: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -25,10 +27,10 @@ export function SuggestShelter() {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <div className="text-5xl mb-4">✅</div>
-        <h2 className="text-2xl font-display font-bold mb-2">Thank you!</h2>
-        <p className="text-gray-500">Your shelter suggestion has been submitted for review.</p>
+        <h2 className="text-2xl font-display font-bold mb-2">{t.thankYou}</h2>
+        <p className="text-gray-500">{t.submitted}</p>
         <button onClick={() => setStatus("idle")} className="mt-6 text-primary-600 hover:text-primary-700 font-medium">
-          Submit another →
+          {t.submitAnother}
         </button>
       </div>
     );
@@ -36,27 +38,26 @@ export function SuggestShelter() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <h1 className="text-2xl font-display font-bold mb-2">Suggest a Shelter</h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Know a shelter that should be in our database? Let us know and we'll add it.
-      </p>
+      <h1 className="text-2xl font-display font-bold mb-2">{t.suggestTitle}</h1>
+      <p className="text-gray-500 text-sm mb-2">{t.suggestSubtitle}</p>
+      <p className="text-gray-400 text-xs mb-6 italic">{t.suggestWhy}</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Shelter name *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.shelterName} *</label>
           <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.city} *</label>
           <input required value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Voivodeship</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.voivodeship}</label>
           <select value={form.voivodeship} onChange={(e) => setForm({ ...form, voivodeship: e.target.value })}
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200">
-            <option value="">— Select —</option>
+            <option value="">{lang === "pl" ? "— Wybierz —" : "— Select —"}</option>
             <option value="dolnoslaskie">Dolnośląskie</option>
             <option value="kujawsko-pomorskie">Kujawsko-Pomorskie</option>
             <option value="lodzkie">Łódzkie</option>
@@ -76,25 +77,22 @@ export function SuggestShelter() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Website URL (cats page)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.websiteUrl}</label>
           <input type="url" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })}
             placeholder="https://..."
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Your email (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t.yourEmail}</label>
           <input type="email" value={form.submitter_email} onChange={(e) => setForm({ ...form, submitter_email: e.target.value })}
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
 
-        <button
-          type="submit"
-          disabled={status === "sending"}
-          className="bg-primary-600 text-white rounded-xl px-6 py-3 font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50"
-        >
-          {status === "sending" ? "Sending..." : "Submit suggestion"}
+        <button type="submit" disabled={status === "sending"}
+          className="bg-primary-600 text-white rounded-xl px-6 py-3 font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50">
+          {status === "sending" ? t.sending : t.submit}
         </button>
-        {status === "error" && <p className="text-red-500 text-sm">Something went wrong. Please try again.</p>}
+        {status === "error" && <p className="text-red-500 text-sm">{t.somethingWrong}</p>}
       </form>
     </div>
   );

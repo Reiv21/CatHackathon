@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export function MapView() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data: shelters, loading, error, retry } = useShelters();
   const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -65,7 +65,7 @@ export function MapView() {
             onClick={() => setSidebarExpanded(!sidebarExpanded)}
             className="mb-2 text-xs text-primary-600 hover:text-primary-700 font-medium"
           >
-            {sidebarExpanded ? "↙ Minimize" : "↗ Expand"}
+            {sidebarExpanded ? (lang === "pl" ? "↙ Zwiń" : "↙ Minimize") : (lang === "pl" ? "↗ Rozwiń" : "↗ Expand")}
           </button>
         )}
         {shelters && !selectedShelter && (

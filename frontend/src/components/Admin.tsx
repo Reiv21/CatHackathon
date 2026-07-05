@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useI18n } from "../i18n";
 
 interface Suggestion {
   name: string;
@@ -10,6 +11,7 @@ interface Suggestion {
 }
 
 export function Admin() {
+  const { lang } = useI18n();
   const [password, setPassword] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -52,17 +54,19 @@ export function Admin() {
   if (!token) {
     return (
       <div className="max-w-sm mx-auto px-4 py-16">
-        <h1 className="text-2xl font-display font-bold mb-6 text-center">Admin Login</h1>
+        <h1 className="text-2xl font-display font-bold mb-6 text-center">
+          {lang === "pl" ? "Panel administratora" : "Admin Login"}
+        </h1>
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder={lang === "pl" ? "Hasło" : "Password"}
             className="border border-cat-sand rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-200"
           />
           <button type="submit" className="bg-cat-dark text-white rounded-xl px-6 py-3 font-semibold hover:opacity-90">
-            Login
+            {lang === "pl" ? "Zaloguj" : "Login"}
           </button>
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         </form>
