@@ -111,6 +111,9 @@ export default function App() {
           <p className="mb-2">{t.footerTitle}</p>
           <p className="text-gray-400 mb-3">{t.footerDesc}</p>
           <div className="flex justify-center gap-4 text-xs text-gray-600">
+            <button onClick={() => { setPage("home"); window.scrollTo(0, 0); }} className="hover:text-gray-400">
+              {lang === "pl" ? "⬆ Na górę" : "⬆ Back to top"}
+            </button>
             <button onClick={() => setPage("suggest")} className="hover:text-gray-400">{t.addShelter}</button>
             <button onClick={() => setPage("admin")} className="hover:text-gray-400">Admin</button>
           </div>

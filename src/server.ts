@@ -4,9 +4,12 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import { config as dotenvConfig } from "dotenv";
 import { sanitizeSearchQuery, validateShelterId } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
 import { getVoivodeshipForCity } from "./city-voivodeship.js";
+
+dotenvConfig();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
