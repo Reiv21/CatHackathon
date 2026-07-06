@@ -96,6 +96,17 @@ export function MapView() {
           🐱 {showStrays ? t.hideStrays : t.showStrays}
         </button>
 
+        {showStrays && strays.length > 0 && (
+          <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+            {strays.map((s) => (
+              <div key={s.id} className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs">
+                <p className="font-medium">{s.city || "?"} • {new Date(s.reported_at).toLocaleDateString()}</p>
+                {s.description && <p className="text-gray-600 truncate">{s.description}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
         {shelters && !selectedShelter && (
           <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
         )}

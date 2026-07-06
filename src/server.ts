@@ -328,10 +328,19 @@ export function createApp(dbPath?: string) {
       return;
     }
 
+    // Fix imgur links: convert imgur.com/XYZ to i.imgur.com/XYZ.png
+    let fixedImageUrl = image_url || null;
+    if (fixedImageUrl) {
+      const imgurMatch = fixedImageUrl.match(/(?:https?:\/\/)?(?:www\.)?imgur\.com\/(\w+)$/);
+      if (imgurMatch) {
+        fixedImageUrl = `https://i.imgur.com/${imgurMatch[1]}.png`;
+      }
+    }
+
     const report = {
       id: Date.now(),
       description: description || "",
-      image_url: image_url || null,
+      image_url: fixedImageUrl,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       city: city || "",
