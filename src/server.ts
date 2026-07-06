@@ -366,7 +366,7 @@ export function createApp(dbPath?: string) {
   // Stray cat reports — rate limit 3 per IP per 24h (skip for localhost)
   const strayReports = new Map<string, { count: number; resetAt: number }>();
 
-  app.post("/api/report-stray", (req, res) => {
+  app.post("/api/report-stray", async (req, res) => {
     const ip = req.ip || req.socket.remoteAddress || "unknown";
     const isLocal = ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
     const now = Date.now();
@@ -384,7 +384,7 @@ export function createApp(dbPath?: string) {
       }
     }
 
-    const { description, image_url, latitude, longitude, city } = req.body;
+    const { description, image_url, latitude, longitude, city, address: form_address } = req.body;
     if (!latitude && !city) {
       res.status(400).json({ message: "Location or city is required" });
       return;
@@ -396,12 +396,26 @@ export function createApp(dbPath?: string) {
     let lat = parseFloat(latitude) || 0;
     let lng = parseFloat(longitude) || 0;
 
-    // If no GPS but city given, use geocoding for approximate map pin
-    if ((lat === 0 || isNaN(lat)) && city) {
+    // If no GPS, try geocoding: first hardcoded cities, then Nominatim (OpenStreetMap)
+    if ((lat === 0 || isNaN(lat)) && (city || form_address)) {
+      const searchQuery = form_address ? `${form_address}, ${city}, Poland` : `${city}, Poland`;
       const coords = getCityCoords(city);
       if (coords) {
         lat = coords[0] + (Math.random() - 0.5) * 0.01;
         lng = coords[1] + (Math.random() - 0.5) * 0.01;
+      } else {
+        // Fallback: Nominatim geocoding (free, no API key needed)
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=pl`;
+          const geoRes = await fetch(url, { headers: { "User-Agent": "Mrucznik-CatHackathon/1.0" } });
+          const geoData = await geoRes.json() as Array<{ lat: string; lon: string }>;
+          if (geoData.length > 0) {
+            lat = parseFloat(geoData[0].lat);
+            lng = parseFloat(geoData[0].lon);
+          }
+        } catch {
+          // Geocoding failed — pin stays at 0,0
+        }
       }
     }
 
