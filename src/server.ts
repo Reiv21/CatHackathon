@@ -509,9 +509,13 @@ export function createApp(dbPath?: string) {
       return;
     }
     const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
+    // Timing-safe comparison to prevent timing attacks
+    const input = Buffer.from(String(password || ""));
+    const expected = Buffer.from(ADMIN_PASSWORD);
+    const isValid = input.length === expected.length &&
+      require("crypto").timingSafeEqual(input, expected);
+    if (isValid) {
       clearAttempts(ip);
-      // Simple token (in production use JWT)
       const token = Buffer.from(`admin:${Date.now()}`).toString("base64");
       res.json({ token });
     } else {
