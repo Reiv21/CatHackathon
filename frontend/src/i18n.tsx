@@ -111,6 +111,23 @@ const translations = {
     submitted: "Your shelter suggestion has been submitted for review.",
     submitAnother: "Submit another →",
     somethingWrong: "Something went wrong. Please try again.",
+
+    // Stray reports
+    reportStray: "Report Stray",
+    reportStrayTitle: "Report a Stray Cat",
+    reportStraySubtitle: "Spotted a homeless or neglected cat? Help by reporting its location.",
+    strayDesc: "Description (condition, color, behavior)",
+    strayImageUrl: "Photo URL (optional)",
+    strayLocation: "Location",
+    useMyLocation: "Use my location",
+    strayCity: "City / area",
+    reportSubmit: "Submit report",
+    reportSending: "Sending...",
+    reportThanks: "Thank you for reporting!",
+    reportThanksSub: "Your report helps local organizations locate and help stray cats.",
+    showStrays: "Show stray reports",
+    hideStrays: "Hide stray reports",
+    strayReported: "Stray cat reported",
   },
   pl: {
     home: "Start",
@@ -208,6 +225,23 @@ const translations = {
     submitted: "Twoja propozycja schroniska została wysłana do weryfikacji.",
     submitAnother: "Wyślij kolejną →",
     somethingWrong: "Coś poszło nie tak. Spróbuj ponownie.",
+
+    // Stray reports
+    reportStray: "Zgłoś kota",
+    reportStrayTitle: "Zgłoś bezdomnego kota",
+    reportStraySubtitle: "Widzisz zaniedbanego lub bezdomnego kota? Zgłoś jego lokalizację.",
+    strayDesc: "Opis (stan, kolor, zachowanie)",
+    strayImageUrl: "URL zdjęcia (opcjonalnie)",
+    strayLocation: "Lokalizacja",
+    useMyLocation: "Użyj mojej lokalizacji",
+    strayCity: "Miasto / okolica",
+    reportSubmit: "Wyślij zgłoszenie",
+    reportSending: "Wysyłam...",
+    reportThanks: "Dziękujemy za zgłoszenie!",
+    reportThanksSub: "Twoje zgłoszenie pomoże lokalnym organizacjom zlokalizować i pomóc bezdomnym kotom.",
+    showStrays: "Pokaż bezdomne koty",
+    hideStrays: "Ukryj bezdomne koty",
+    strayReported: "Zgłoszony bezdomny kot",
   },
 };
 

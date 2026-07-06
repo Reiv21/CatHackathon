@@ -6,13 +6,14 @@ import { Home } from "./components/Home";
 import { SuggestShelter } from "./components/SuggestShelter";
 import { Admin } from "./components/Admin";
 import { Volunteer } from "./components/Volunteer";
+import { ReportStray } from "./components/ReportStray";
 import { useI18n } from "./i18n";
 
-type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer";
+type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer" | "report-stray";
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.replace("#", "") || "home";
-  const valid: Page[] = ["home", "search", "map", "guides", "suggest", "admin", "volunteer"];
+  const valid: Page[] = ["home", "search", "map", "guides", "suggest", "admin", "volunteer", "report-stray"];
   return valid.includes(hash as Page) ? (hash as Page) : "home";
 }
 
@@ -53,6 +54,7 @@ export default function App() {
                 ["guides", t.guides],
                 ["volunteer", t.volunteer],
                 ["suggest", t.addShelter],
+                ["report-stray", t.reportStray],
               ] as [Page, string][]).map(([id, label]) => (
                 <button
                   key={id}
@@ -120,6 +122,7 @@ export default function App() {
         {page === "guides" && <Guides />}
         {page === "suggest" && <SuggestShelter />}
         {page === "volunteer" && <Volunteer />}
+        {page === "report-stray" && <ReportStray />}
         {page === "admin" && <Admin />}
       </main>
 

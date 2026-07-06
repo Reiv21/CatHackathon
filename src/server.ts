@@ -298,6 +298,57 @@ export function createApp(dbPath?: string) {
     } catch (err) { next(err); }
   });
 
+  // Stray cat reports — rate limit 3 per IP per 24h
+  const strayReports = new Map<string, { count: number; resetAt: number }>();
+
+  app.post("/api/report-stray", (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const now = Date.now();
+    const entry = strayReports.get(ip);
+    if (entry && entry.resetAt > now && entry.count >= 3) {
+      res.status(429).json({ message: "Too many reports. Max 3 per day." });
+      return;
+    }
+    if (!entry || entry.resetAt <= now) {
+      strayReports.set(ip, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
+    } else {
+      entry.count++;
+    }
+
+    const { description, image_url, latitude, longitude, city } = req.body;
+    if (!latitude || !longitude) {
+      res.status(400).json({ message: "Location is required" });
+      return;
+    }
+
+    const report = {
+      id: Date.now(),
+      description: description || "",
+      image_url: image_url || null,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      city: city || "",
+      reported_at: new Date().toISOString(),
+    };
+
+    const straysPath = path.join(DATA_DIR, "strays.json");
+    let strays: unknown[] = [];
+    if (existsSync(straysPath)) {
+      strays = JSON.parse(readFileSync(straysPath, "utf-8"));
+    }
+    strays.push(report);
+    writeFileSync(straysPath, JSON.stringify(strays, null, 2));
+    res.json({ message: "Report submitted. Thank you for helping!" });
+  });
+
+  app.get("/api/strays", (_req, res, next) => {
+    try {
+      const straysPath = path.join(DATA_DIR, "strays.json");
+      if (!existsSync(straysPath)) { res.json([]); return; }
+      res.json(JSON.parse(readFileSync(straysPath, "utf-8")));
+    } catch (err) { next(err); }
+  });
+
   // POST endpoints need body parser
   app.use(express.json());
 

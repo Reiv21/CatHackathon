@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
@@ -24,9 +24,17 @@ export function MapView() {
   const { data: shelters, loading, error, retry } = useShelters();
   const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showStrays, setShowStrays] = useState(false);
+  const [strays, setStrays] = useState<Array<{ id: number; latitude: number; longitude: number; description: string; city: string; reported_at: string }>>([]);
   const { data: shelterCats, loading: catsLoading } = useShelterCats(
     selectedShelter?.id_zewnetrzne ?? null
   );
+
+  useEffect(() => {
+    if (showStrays) {
+      fetch("/api/strays").then(r => r.json()).then(setStrays).catch(() => {});
+    }
+  }, [showStrays]);
 
   return (
     <div className="flex flex-col md:flex-row h-full">
@@ -54,6 +62,18 @@ export function MapView() {
           />
           <UserLocation />
           <MapPersist />
+          {showStrays && strays.map((s) => (
+            <CircleMarker key={s.id} center={[s.latitude, s.longitude]} radius={8}
+              pathOptions={{ color: "#e94560", fillColor: "#e94560", fillOpacity: 0.7 }}>
+              <Popup>
+                <div className="text-sm">
+                  <p className="font-bold">{t.strayReported}</p>
+                  <p className="text-gray-600">{s.description || s.city}</p>
+                  <p className="text-xs text-gray-400">{new Date(s.reported_at).toLocaleDateString()}</p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
           {shelters?.map((shelter) => (
             <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
           ))}
@@ -70,6 +90,12 @@ export function MapView() {
             {sidebarExpanded ? (lang === "pl" ? "↙ Zwiń" : "↙ Minimize") : (lang === "pl" ? "↗ Rozwiń" : "↗ Expand")}
           </button>
         )}
+        {/* Stray toggle */}
+        <button onClick={() => setShowStrays(!showStrays)}
+          className={`w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${showStrays ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+          🐱 {showStrays ? t.hideStrays : t.showStrays}
+        </button>
+
         {shelters && !selectedShelter && (
           <NearestShelter shelters={shelters} onSelect={setSelectedShelter} />
         )}
