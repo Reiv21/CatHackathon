@@ -107,7 +107,7 @@ const guidesEN: Guide[] = [
 • Emergency vet visits: €50-500+
 • Consider pet insurance (€12-25/month)
 
-**Tip:** Don't cheap out on food. Good food = fewer vet visits.`,
+Tip: Don't cheap out on food. Good food = fewer vet visits.`,
   },
   {
     id: "fiv-felv",
@@ -243,7 +243,7 @@ const guidesPL: Guide[] = [
 • Drapak: 80-300 zł
 • Transporter: 50-150 zł
 
-**Tip:** Nie oszczędzaj na karmie. Dobra karma = mniej wizyt u weta.` },
+Tip: Nie oszczędzaj na karmie. Dobra karma = mniej wizyt u weta.` },
   { id: "fiv-felv", title: "Koty FIV+ i FeLV+", emoji: "🩺", content: `FIV i FeLV to wirusy, ale NIE oznaczają wyroku śmierci!
 
 **FIV:**

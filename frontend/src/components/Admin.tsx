@@ -27,6 +27,14 @@ export function Admin() {
     setStrayReports(strayReports.filter((s) => s.id !== id));
   };
 
+  const deleteSuggestion = async (index: number) => {
+    await fetch(`/api/admin/suggestions/${index}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setSuggestions(suggestions.filter((_, i) => i !== index));
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -107,13 +115,20 @@ export function Admin() {
       <div className="flex flex-col gap-3">
         {suggestions.map((s, i) => (
           <div key={i} className="bg-white border border-cat-sand rounded-xl p-4">
-            <div className="flex justify-between">
-              <h3 className="font-semibold">{s.name}</h3>
-              <span className="text-xs text-gray-500">{new Date(s.submitted_at).toLocaleDateString()}</span>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex justify-between">
+                  <h3 className="font-semibold">{s.name}</h3>
+                  <span className="text-xs text-gray-500">{new Date(s.submitted_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm text-gray-600">{s.city}{s.voivodeship && `, ${s.voivodeship}`}</p>
+                {s.website_url && <a href={s.website_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600">{s.website_url}</a>}
+                {s.submitter_email && <p className="text-xs text-gray-500 mt-1">From: {s.submitter_email}</p>}
+              </div>
+              <button onClick={() => deleteSuggestion(i)} className="ml-3 text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 bg-red-50 rounded shrink-0">
+                Delete
+              </button>
             </div>
-            <p className="text-sm text-gray-600">{s.city}{s.voivodeship && `, ${s.voivodeship}`}</p>
-            {s.website_url && <a href={s.website_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600">{s.website_url}</a>}
-            {s.submitter_email && <p className="text-xs text-gray-500 mt-1">From: {s.submitter_email}</p>}
           </div>
         ))}
       </div>

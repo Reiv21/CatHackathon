@@ -526,6 +526,29 @@ export function createApp(dbPath?: string) {
     res.json(JSON.parse(readFileSync(suggestionsPath, "utf-8")));
   });
 
+  // Admin: delete suggestion by index
+  app.delete("/api/admin/suggestions/:index", (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+    const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
+    if (!existsSync(suggestionsPath)) {
+      res.status(404).json({ message: "Not found" });
+      return;
+    }
+    const suggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
+    const index = parseInt(req.params.index);
+    if (isNaN(index) || index < 0 || index >= suggestions.length) {
+      res.status(404).json({ message: "Not found" });
+      return;
+    }
+    suggestions.splice(index, 1);
+    writeFileSync(suggestionsPath, JSON.stringify(suggestions, null, 2));
+    res.json({ message: "Deleted" });
+  });
+
   // Sync trigger endpoint — starts Temporal workflow (non-blocking)
   app.post("/api/admin/sync", requireAdminAuth, async (_req, res) => {
     try {

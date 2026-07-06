@@ -9,7 +9,7 @@
     @apply bg-cat-cream text-cat-dark font-sans antialiased overflow-x-hidden;
   }
 
-  /* Scattered paw-print pattern — varied sizes and rotations */
+  /* Paw-print background pattern — fades toward center, visible on edges */
   #root {
     position: relative;
   }
@@ -26,30 +26,30 @@
     mask-image: linear-gradient(to right, black 0%, transparent 25%, transparent 75%, black 100%);
   }
 
-  /* Hide paw pattern when map is active */
+  /* Hide paws on map page */
   #root:has(.map-active)::before {
     display: none;
   }
 
-  /* White panels sit above the paw pattern so paws don't show through */
-  .bg-white {
+  /* All content elements sit above the paw layer */
+  main, header, footer, section, form, nav,
+  .bg-white, .bg-cat-dark, .bg-warm-50, .bg-gray-100,
+  input, select, textarea, button, a {
     position: relative;
     z-index: 1;
   }
 
-  /* Accessible focus indicator - 3:1 contrast ratio */
+  /* Accessible focus indicator */
   *:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
   }
-
   *:focus:not(:focus-visible) {
     outline: none;
   }
 }
 
 @layer components {
-  /* Minimum touch target for mobile interactive elements */
   @media (max-width: 767px) {
     button,
     a,
