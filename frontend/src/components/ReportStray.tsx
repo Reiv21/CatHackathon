@@ -106,16 +106,27 @@ export function ReportStray() {
             rows={3} className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
 
-        {/* Image URL */}
+        {/* Image upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayImageUrl}</label>
-          <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            placeholder="https://..." className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          <p className="text-xs text-gray-500 mt-1">
-            {lang === "pl"
-              ? "Wrzuć zdjęcie na imgur.com lub postimg.cc i wklej link. Nie przechowujemy zdjęć."
-              : "Upload your photo to imgur.com or postimg.cc and paste the link. We don't store images."}
-          </p>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {lang === "pl" ? "Zdjęcie kota (opcjonalnie)" : "Cat photo (optional)"}
+          </label>
+          <input type="file" accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.size > 5 * 1024 * 1024) {
+                alert(lang === "pl" ? "Maks. 5MB" : "Max 5MB");
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = () => setForm({ ...form, image_url: reader.result as string });
+              reader.readAsDataURL(file);
+            }}
+            className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200 file:mr-3 file:rounded-lg file:border-0 file:bg-primary-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary-700" />
+          {form.image_url && (
+            <img src={form.image_url} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
+          )}
         </div>
 
         {/* GPS (optional, for map pin) */}

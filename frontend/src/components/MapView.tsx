@@ -25,7 +25,7 @@ export function MapView() {
   const [selectedShelter, setSelectedShelter] = useState<ShelterResponse | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showStrays, setShowStrays] = useState(false);
-  const [strays, setStrays] = useState<Array<{ id: number; latitude: number; longitude: number; description: string; city: string; reported_at: string }>>([]);
+  const [strays, setStrays] = useState<Array<{ id: number; latitude: number; longitude: number; description: string; city: string; reported_at: string; image_url: string | null }>>([]);
   const { data: shelterCats, loading: catsLoading } = useShelterCats(
     selectedShelter?.id_zewnetrzne ?? null
   );
@@ -66,7 +66,8 @@ export function MapView() {
             <CircleMarker key={s.id} center={[s.latitude, s.longitude]} radius={8}
               pathOptions={{ color: "#e94560", fillColor: "#e94560", fillOpacity: 0.7 }}>
               <Popup>
-                <div className="text-sm">
+                <div className="text-sm max-w-[200px]">
+                  {s.image_url && <img src={s.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" />}
                   <p className="font-bold">{t.strayReported}</p>
                   <p className="text-gray-600">{s.description || s.city}</p>
                   <p className="text-xs text-gray-500">{new Date(s.reported_at).toLocaleDateString()}</p>

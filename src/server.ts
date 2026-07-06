@@ -171,7 +171,7 @@ export function createApp(dbPath?: string) {
   );
 
   // JSON body parser (must be before POST routes)
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
 
   // Stats endpoint
   app.get("/api/stats", (_req, res, next) => {
@@ -390,14 +390,8 @@ export function createApp(dbPath?: string) {
       return;
     }
 
-    // Fix imgur links: convert imgur.com/XYZ to i.imgur.com/XYZ.png
+    // Accept base64 data URIs directly, or regular URLs
     let fixedImageUrl = image_url || null;
-    if (fixedImageUrl) {
-      const imgurMatch = fixedImageUrl.match(/(?:https?:\/\/)?(?:www\.)?imgur\.com\/(\w+)$/);
-      if (imgurMatch) {
-        fixedImageUrl = `https://i.imgur.com/${imgurMatch[1]}.png`;
-      }
-    }
 
     let lat = parseFloat(latitude) || 0;
     let lng = parseFloat(longitude) || 0;
