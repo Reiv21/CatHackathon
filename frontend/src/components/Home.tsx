@@ -50,7 +50,7 @@ export function Home({ onNavigate }: HomeProps) {
     <div>
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-warm-50 to-primary-50 py-16 px-4">
+      <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-cat-dark mb-4">{t.heroTitle}</h1>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">{t.heroSubtitle}</p>
@@ -157,7 +157,7 @@ export function Home({ onNavigate }: HomeProps) {
       </section>
 
       {/* Want to help */}
-      <section className="py-12 px-4 bg-warm-50">
+      <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-display font-bold text-center mb-8">{t.wantToHelp}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
