@@ -337,12 +337,24 @@ export function createApp(dbPath?: string) {
       }
     }
 
+    let lat = parseFloat(latitude) || 0;
+    let lng = parseFloat(longitude) || 0;
+
+    // If no GPS but city given, use geocoding for approximate map pin
+    if ((lat === 0 || isNaN(lat)) && city) {
+      const coords = getCityCoords(city);
+      if (coords) {
+        lat = coords[0] + (Math.random() - 0.5) * 0.01;
+        lng = coords[1] + (Math.random() - 0.5) * 0.01;
+      }
+    }
+
     const report = {
       id: Date.now(),
       description: description || "",
       image_url: fixedImageUrl,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      latitude: lat,
+      longitude: lng,
       city: city || "",
       reported_at: new Date().toISOString(),
     };
@@ -363,6 +375,22 @@ export function createApp(dbPath?: string) {
       if (!existsSync(straysPath)) { res.json([]); return; }
       res.json(JSON.parse(readFileSync(straysPath, "utf-8")));
     } catch (err) { next(err); }
+  });
+
+  // Admin: delete stray report
+  app.delete("/api/admin/strays/:id", (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+    const straysPath = path.join(DATA_DIR, "strays.json");
+    if (!existsSync(straysPath)) { res.json({ message: "Not found" }); return; }
+    const strays = JSON.parse(readFileSync(straysPath, "utf-8")) as Array<{ id: number }>;
+    const id = parseInt(req.params.id);
+    const filtered = strays.filter((s) => s.id !== id);
+    writeFileSync(straysPath, JSON.stringify(filtered, null, 2));
+    res.json({ message: "Deleted" });
   });
 
   app.delete("/api/admin/strays/:id", (req, res) => {

@@ -1,23 +1,5 @@
 [
   {
-    "id": 1783352619623,
-    "description": "tesd",
-    "image_url": "https://imgur.com/UFhGvtn",
-    "latitude": 0,
-    "longitude": 0,
-    "city": "Sosnowiec",
-    "reported_at": "2026-07-06T15:43:39.623Z"
-  },
-  {
-    "id": 1783353075453,
-    "description": "test kot",
-    "image_url": "https://imgur.com/UFhGvtn",
-    "latitude": 0,
-    "longitude": 0,
-    "city": "Katowice",
-    "reported_at": "2026-07-06T15:51:15.453Z"
-  },
-  {
     "id": 1783353130914,
     "description": "test kot",
     "image_url": "https://i.imgur.com/UFhGvtn.png",

@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
 
+const CITIES = [
+  "Białystok", "Bełchatów", "Bielsko-Biała", "Bydgoszcz", "Bytom",
+  "Celestynów", "Chorzów", "Częstochowa", "Gdańsk", "Gdynia",
+  "Gliwice", "Katowice", "Kielce", "Konin", "Koszalin", "Kraków",
+  "Legnica", "Lublin", "Łódź", "Mielec", "Nowy Dwór Mazowiecki",
+  "Olsztyn", "Opole", "Oświęcim", "Poznań", "Przemyśl", "Puławy",
+  "Racibórz", "Radom", "Rzeszów", "Skierniewice", "Sosnowiec",
+  "Szczecin", "Tarnów", "Toruń", "Warszawa", "Wrocław",
+  "Zabrze", "Zielona Góra", "Żyrardów", "Żywiec",
+].sort();
+
 export function ReportStray() {
   const { t, lang } = useI18n();
-  const [form, setForm] = useState({ description: "", image_url: "", latitude: "", longitude: "", city: "" });
+  const [form, setForm] = useState({ description: "", image_url: "", city: "", address: "" });
+  const [gps, setGps] = useState<{ lat: string; lng: string } | null>(null);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [locating, setLocating] = useState(false);
 
@@ -11,7 +23,7 @@ export function ReportStray() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setForm({ ...form, latitude: String(pos.coords.latitude), longitude: String(pos.coords.longitude) });
+        setGps({ lat: String(pos.coords.latitude), lng: String(pos.coords.longitude) });
         setLocating(false);
       },
       () => setLocating(false)
@@ -20,16 +32,19 @@ export function ReportStray() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.latitude && !form.city) {
-      alert(lang === "pl" ? "Podaj lokalizację lub miasto" : "Provide location or city");
+    if (!form.city) {
+      alert(lang === "pl" ? "Wybierz miasto" : "Select a city");
       return;
     }
     setStatus("sending");
     try {
       const body = {
-        ...form,
-        latitude: form.latitude || "0",
-        longitude: form.longitude || "0",
+        description: form.description,
+        image_url: form.image_url,
+        city: form.city,
+        address: form.address,
+        latitude: gps?.lat || "0",
+        longitude: gps?.lng || "0",
       };
       const res = await fetch("/api/report-stray", {
         method: "POST",
@@ -52,7 +67,7 @@ export function ReportStray() {
         <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-display font-bold mb-2">{t.reportThanks}</h2>
         <p className="text-gray-500">{t.reportThanksSub}</p>
-        <button onClick={() => { setStatus("idle"); setForm({ description: "", image_url: "", latitude: "", longitude: "", city: "" }); }}
+        <button onClick={() => { setStatus("idle"); setForm({ description: "", image_url: "", city: "", address: "" }); setGps(null); }}
           className="mt-6 text-primary-600 font-medium">↩</button>
       </div>
     );
@@ -64,11 +79,34 @@ export function ReportStray() {
       <p className="text-gray-500 text-sm mb-6">{t.reportStraySubtitle}</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* City select */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{lang === "pl" ? "Miasto *" : "City *"}</label>
+          <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+            className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200">
+            <option value="">{lang === "pl" ? "— Wybierz miasto —" : "— Select city —"}</option>
+            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        {/* Address / details */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {lang === "pl" ? "Adres / okolica (opcjonalnie)" : "Address / area (optional)"}
+          </label>
+          <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}
+            placeholder={lang === "pl" ? "np. ul. Kościuszki, park przy..." : "e.g. Main Street, park near..."}
+            className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+        </div>
+
+        {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayDesc}</label>
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={3} className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
+
+        {/* Image URL */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayImageUrl}</label>
           <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })}
@@ -79,20 +117,19 @@ export function ReportStray() {
               : "Upload your photo to imgur.com or postimg.cc and paste the link. We don't store images."}
           </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayLocation} *</label>
-          <div className="flex gap-2 mb-2">
-            <button type="button" onClick={getLocation} disabled={locating}
-              className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium disabled:opacity-50">
-              📍 {locating ? "..." : t.useMyLocation}
-            </button>
-          </div>
-          {form.latitude && <p className="text-xs text-gray-400">📍 {parseFloat(form.latitude).toFixed(4)}, {parseFloat(form.longitude).toFixed(4)}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayCity}</label>
-          <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-            className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+
+        {/* GPS (optional, for map pin) */}
+        <div className="bg-gray-50 rounded-xl p-3">
+          <p className="text-xs text-gray-500 mb-2">
+            {lang === "pl"
+              ? "📍 Opcjonalnie: udostępnij dokładną lokalizację, aby kot pojawił się na mapie"
+              : "📍 Optional: share exact location to show the cat on the map"}
+          </p>
+          <button type="button" onClick={getLocation} disabled={locating}
+            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium disabled:opacity-50">
+            📍 {locating ? "..." : t.useMyLocation}
+          </button>
+          {gps && <p className="text-xs text-green-600 mt-2">✓ {lang === "pl" ? "Lokalizacja pobrana" : "Location captured"} ({parseFloat(gps.lat).toFixed(3)}, {parseFloat(gps.lng).toFixed(3)})</p>}
         </div>
 
         <button type="submit" disabled={status === "sending"}
