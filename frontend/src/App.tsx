@@ -152,7 +152,7 @@ export default function App() {
       <main ref={mainRef} className="flex-1" tabIndex={-1}>
         {page === "home" && <Home onNavigate={setPage} />}
         {page === "search" && <div className="flex-1 overflow-y-auto"><CatSearch /></div>}
-        {page === "map" && <div className="h-[calc(100vh-3.5rem)] overflow-hidden"><MapView /></div>}
+        {page === "map" && <div className="map-active h-[calc(100vh-3.5rem)] overflow-hidden"><MapView /></div>}
         {page === "guides" && <Guides />}
         {page === "suggest" && <SuggestShelter />}
         {page === "volunteer" && <Volunteer />}

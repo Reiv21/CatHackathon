@@ -104,7 +104,7 @@ export function Home({ onNavigate }: HomeProps) {
       )}
 
       {/* Stats */}
-      <section className="py-12 px-4 border-y border-cat-sand">
+      <section className="py-12 px-4">
         {statsLoading && <StatsSkeleton />}
         {!statsLoading && statsError && <InlineError message={statsError} onRetry={fetchStats} />}
         {!statsLoading && !statsError && (
