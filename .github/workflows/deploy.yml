@@ -1,0 +1,40 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: 22
+          script: |
+            cd ~/cat-hackathon
+
+            # Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Install dependencies
+            npm install --production
+            cd frontend && npm install && npm run build && cd ..
+
+            # Copy .env if not exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠️  Created .env from example — edit it with real values!"
+            fi
+
+            # Restart server with PM2
+            pm2 restart cat-hackathon-server || pm2 start "npx tsx src/server.ts" --name cat-hackathon-server
+            pm2 save
