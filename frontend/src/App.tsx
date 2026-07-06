@@ -54,7 +54,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-cat-cream flex flex-col">
-      <header className="bg-white border-b border-cat-sand sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-cat-sand sticky top-0 z-[1001] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
           <button onClick={() => navigate("home")} className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl">🐱</span>

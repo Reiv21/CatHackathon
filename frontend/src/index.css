@@ -7,11 +7,30 @@
 @layer base {
   body {
     @apply bg-cat-cream text-cat-dark font-sans antialiased overflow-x-hidden;
-    background-image: 
-      radial-gradient(ellipse at 20% 50%, rgba(255, 237, 213, 0.4) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(219, 234, 254, 0.3) 0%, transparent 50%),
-      radial-gradient(ellipse at 60% 80%, rgba(254, 226, 226, 0.2) 0%, transparent 50%);
-    background-attachment: fixed;
+  }
+
+  /* Subtle decorative paw prints scattered in background */
+  #root::before {
+    content: "🐾";
+    position: fixed;
+    top: 15%;
+    left: 5%;
+    font-size: 2rem;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #root::after {
+    content: "🐾  🐾  🐾";
+    position: fixed;
+    bottom: 20%;
+    right: 8%;
+    font-size: 1.5rem;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 3rem;
+    transform: rotate(-15deg);
   }
 
   /* Accessible focus indicator - 3:1 contrast ratio against white/cream backgrounds */
