@@ -64,25 +64,40 @@ export default function App() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
             <nav aria-label={lang === "pl" ? "Nawigacja główna" : "Main navigation"} className="flex items-center gap-1">
-              {([
-                ["home", t.home],
-                ["search", t.findCat],
-                ["map", t.map],
-                ["guides", t.guides],
-                ["volunteer", t.volunteer],
-                ["suggest", t.addShelter],
-                ["report-stray", t.reportStray],
-              ] as [Page, string][]).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => navigate(id)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    page === id ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {label}
+              <button onClick={() => navigate("home")}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "home" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                {t.home}
+              </button>
+              <button onClick={() => navigate("search")}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "search" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                {t.findCat}
+              </button>
+              <button onClick={() => navigate("map")}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "map" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                {t.map}
+              </button>
+
+              {/* Pomoc dropdown */}
+              <div className="relative group">
+                <button className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${(page === "guides" || page === "volunteer") ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                  {lang === "pl" ? "Pomoc" : "Help"} ▾
                 </button>
-              ))}
+                <div className="absolute left-0 top-full mt-1 bg-white border border-cat-sand rounded-xl shadow-lg py-1 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <button onClick={() => navigate("guides")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.guides}</button>
+                  <button onClick={() => navigate("volunteer")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.volunteer}</button>
+                </div>
+              </div>
+
+              {/* Zgłoś dropdown */}
+              <div className="relative group">
+                <button className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${(page === "suggest" || page === "report-stray") ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                  {lang === "pl" ? "Zgłoś" : "Report"} ▾
+                </button>
+                <div className="absolute left-0 top-full mt-1 bg-white border border-cat-sand rounded-xl shadow-lg py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <button onClick={() => navigate("suggest")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.addShelter}</button>
+                  <button onClick={() => navigate("report-stray")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.reportStray}</button>
+                </div>
+              </div>
             </nav>
             <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
               aria-label={lang === "en" ? "Switch to Polish" : "Przełącz na angielski"}
@@ -115,24 +130,21 @@ export default function App() {
         {/* Mobile dropdown menu */}
         {menuOpen && (
           <nav aria-label={lang === "pl" ? "Menu mobilne" : "Mobile menu"} className="md:hidden border-t border-cat-sand bg-white px-4 py-2 space-y-1">
-            {([
-              ["home", t.home],
-              ["search", t.findCat],
-              ["map", t.map],
-              ["guides", t.guides],
-              ["volunteer", t.volunteer],
-              ["suggest", t.addShelter],
-            ] as [Page, string][]).map(([id, label]) => (
-              <button
-                key={id}
-                onClick={() => navigate(id)}
-                className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  page === id ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            <button onClick={() => navigate("home")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "home" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.home}</button>
+            <button onClick={() => navigate("search")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "search" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.findCat}</button>
+            <button onClick={() => navigate("map")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "map" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.map}</button>
+            
+            <div className="border-t border-cat-sand pt-1 mt-1">
+              <p className="px-3 py-1 text-xs text-gray-400 uppercase tracking-wide">{lang === "pl" ? "Pomoc" : "Help"}</p>
+              <button onClick={() => navigate("guides")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "guides" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.guides}</button>
+              <button onClick={() => navigate("volunteer")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "volunteer" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.volunteer}</button>
+            </div>
+
+            <div className="border-t border-cat-sand pt-1 mt-1">
+              <p className="px-3 py-1 text-xs text-gray-400 uppercase tracking-wide">{lang === "pl" ? "Zgłoś" : "Report"}</p>
+              <button onClick={() => navigate("suggest")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "suggest" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.addShelter}</button>
+              <button onClick={() => navigate("report-stray")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "report-stray" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.reportStray}</button>
+            </div>
           </nav>
         )}
       </header>

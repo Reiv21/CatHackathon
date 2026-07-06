@@ -80,13 +80,13 @@ export function MapView() {
         </MapContainer>
       </div>
 
-      <div className={`${sidebarExpanded ? "fixed inset-0 z-[2000]" : "w-full md:w-80 lg:w-96 max-h-[50vh] md:max-h-none md:h-full"} bg-white border-t md:border-t-0 md:border-l border-cat-sand overflow-y-auto p-4`}>
-        {/* Expand/collapse button */}
+      <div className={`${sidebarExpanded ? "fixed inset-0 z-[2000] md:relative md:inset-auto md:z-auto md:w-80 lg:w-96 md:max-h-none md:h-full" : "w-full md:w-80 lg:w-96 max-h-[50vh] md:max-h-none md:h-full"} bg-white border-t md:border-t-0 md:border-l border-cat-sand overflow-y-auto p-4`}>
+        {/* Expand/collapse button — mobile only */}
         {selectedShelter && shelterCats && shelterCats.length > 0 && (
           <button
             onClick={() => setSidebarExpanded(!sidebarExpanded)}
             aria-label={sidebarExpanded ? (lang === "pl" ? "Zwiń panel" : "Minimize panel") : (lang === "pl" ? "Rozwiń panel" : "Expand panel")}
-            className="mb-2 text-xs text-primary-600 hover:text-primary-700 font-medium"
+            className="mb-2 text-xs text-primary-600 hover:text-primary-700 font-medium md:hidden"
           >
             {sidebarExpanded ? (lang === "pl" ? "↙ Zwiń" : "↙ Minimize") : (lang === "pl" ? "↗ Rozwiń" : "↗ Expand")}
           </button>
