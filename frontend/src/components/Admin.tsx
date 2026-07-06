@@ -16,7 +16,16 @@ export function Admin() {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [strayReports, setStrayReports] = useState<Array<{ id: number; description: string; city: string; image_url: string | null; reported_at: string }>>([]);
   const [loading, setLoading] = useState(false);
+
+  const deleteStray = async (id: number) => {
+    await fetch(`/api/admin/strays/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setStrayReports(strayReports.filter((s) => s.id !== id));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +58,12 @@ export function Admin() {
       .then((data) => setSuggestions(data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Also fetch stray reports
+    fetch("/api/strays")
+      .then((r) => r.json())
+      .then((data) => setStrayReports(data))
+      .catch(() => {});
   }, [token]);
 
   if (!token) {
@@ -101,6 +116,24 @@ export function Admin() {
             {s.submitter_email && <p className="text-xs text-gray-400 mt-1">From: {s.submitter_email}</p>}
           </div>
         ))}
+      </div>
+
+      {/* Stray reports management */}
+      <h2 className="text-lg font-semibold mt-8 mb-4">Stray Reports ({strayReports.length})</h2>
+      <div className="flex flex-col gap-3">
+        {strayReports.map((s) => (
+          <div key={s.id} className="bg-white border border-red-200 rounded-xl p-4 flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium">{s.city} • {new Date(s.reported_at).toLocaleDateString()}</p>
+              <p className="text-xs text-gray-600">{s.description || "No description"}</p>
+              {s.image_url && <a href={s.image_url} target="_blank" rel="noreferrer" className="text-xs text-primary-600">View image</a>}
+            </div>
+            <button onClick={() => deleteStray(s.id)} className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 bg-red-50 rounded">
+              Delete
+            </button>
+          </div>
+        ))}
+        {strayReports.length === 0 && <p className="text-gray-400 text-sm">No stray reports.</p>}
       </div>
     </div>
   );

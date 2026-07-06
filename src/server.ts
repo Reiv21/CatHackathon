@@ -103,7 +103,7 @@ export function createApp(dbPath?: string) {
   app.use(
     cors({
       origin: FRONTEND_ORIGIN,
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "DELETE"],
       allowedHeaders: ["Content-Type", "Accept", "Authorization"],
     })
   );
@@ -363,6 +363,21 @@ export function createApp(dbPath?: string) {
       if (!existsSync(straysPath)) { res.json([]); return; }
       res.json(JSON.parse(readFileSync(straysPath, "utf-8")));
     } catch (err) { next(err); }
+  });
+
+  app.delete("/api/admin/strays/:id", (req, res) => {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+    const straysPath = path.join(DATA_DIR, "strays.json");
+    if (!existsSync(straysPath)) { res.json({ message: "Not found" }); return; }
+    const strays = JSON.parse(readFileSync(straysPath, "utf-8"));
+    const id = parseInt(req.params.id);
+    const filtered = strays.filter((s: { id: number }) => s.id !== id);
+    writeFileSync(straysPath, JSON.stringify(filtered, null, 2));
+    res.json({ message: "Deleted" });
   });
 
   // Suggest shelter (public)
