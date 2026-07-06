@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "../api";
 import { useI18n } from "../i18n";
 import type { CatResponse } from "../types";
+import { DominationTracker, type DominationResponse } from "./DominationTracker";
+import { CatArmyCounter } from "./CatArmyCounter";
+import { AchievementBadges } from "./AchievementBadges";
+import { StatsSkeleton, CatOfDaySkeleton } from "./Skeletons";
+import { InlineError } from "./InlineError";
 
 interface HomeProps {
   onNavigate: (page: "search" | "map" | "guides" | "volunteer") => void;
@@ -13,18 +18,82 @@ interface Stats {
   lastFetched: string | null;
 }
 
+interface Achievement {
+  name: string;
+  description: string;
+  icon: string;
+  unlocked_at: string;
+}
+
 export function Home({ onNavigate }: HomeProps) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
   const [catOfDay, setCatOfDay] = useState<CatResponse | null>(null);
+  const [catOfDayLoading, setCatOfDayLoading] = useState(true);
+  const [catOfDayError, setCatOfDayError] = useState<string | null>(null);
+
+  const [domination, setDomination] = useState<DominationResponse | null>(null);
+  const [dominationLoading, setDominationLoading] = useState(true);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+
+  const fetchStats = useCallback(() => {
+    setStatsLoading(true);
+    setStatsError(null);
+    apiFetch<Stats>("/api/stats")
+      .then((data) => { setStats(data); setStatsLoading(false); })
+      .catch((err) => { setStatsError(err instanceof Error ? err.message : "Failed to load stats"); setStatsLoading(false); });
+  }, []);
+
+  const fetchCatOfDay = useCallback(() => {
+    setCatOfDayLoading(true);
+    setCatOfDayError(null);
+    apiFetch<CatResponse | null>("/api/cat-of-the-day")
+      .then((data) => { setCatOfDay(data); setCatOfDayLoading(false); })
+      .catch((err) => { setCatOfDayError(err instanceof Error ? err.message : "Failed to load cat of the day"); setCatOfDayLoading(false); });
+  }, []);
 
   useEffect(() => {
-    apiFetch<Stats>("/api/stats").then(setStats).catch(() => {});
-    apiFetch<CatResponse | null>("/api/cat-of-the-day").then(setCatOfDay).catch(() => {});
-  }, []);
+    fetchStats();
+    fetchCatOfDay();
+
+    apiFetch<DominationResponse>("/api/domination")
+      .then((data) => {
+        setDomination(data);
+        setDominationLoading(false);
+      })
+      .catch(() => {
+        setDominationLoading(false);
+      });
+
+    apiFetch<Achievement[]>("/api/achievements")
+      .then(setAchievements)
+      .catch(() => setAchievements([]));
+  }, [fetchStats, fetchCatOfDay]);
 
   return (
     <div>
+      {/* Thematic Banner */}
+      <section className="bg-gradient-to-r from-primary-700 to-primary-900 py-10 px-4 text-center text-white">
+        <h1 className="text-3xl sm:text-4xl font-display font-extrabold mb-2">
+          Światowy Dzień Kociej Dominacji
+        </h1>
+        <p className="text-lg text-white/80">
+          Katalogujemy wszystkie koty do adopcji w Polsce
+        </p>
+      </section>
+
+      {/* Domination Gamification */}
+      <section className="py-8 px-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <DominationTracker data={domination} loading={dominationLoading} />
+          <CatArmyCounter targetCount={domination?.cats_in_army ?? 0} lang={lang} />
+          <AchievementBadges achievements={achievements} />
+        </div>
+      </section>
+
       {/* Hero */}
       <section className="bg-gradient-to-br from-warm-50 to-primary-50 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -42,12 +111,28 @@ export function Home({ onNavigate }: HomeProps) {
       </section>
 
       {/* Cat of the Day */}
-      {catOfDay && catOfDay.image_url && (
+      {catOfDayLoading && (
+        <section className="py-12 px-4">
+          <div className="max-w-lg mx-auto">
+            <h2 className="text-xl font-display font-bold text-center mb-6">{t.catOfDay}</h2>
+            <CatOfDaySkeleton />
+          </div>
+        </section>
+      )}
+      {!catOfDayLoading && catOfDayError && (
+        <section className="py-12 px-4">
+          <div className="max-w-lg mx-auto">
+            <h2 className="text-xl font-display font-bold text-center mb-6">{t.catOfDay}</h2>
+            <InlineError message={catOfDayError} onRetry={fetchCatOfDay} />
+          </div>
+        </section>
+      )}
+      {!catOfDayLoading && !catOfDayError && catOfDay && catOfDay.image_url && (
         <section className="py-12 px-4">
           <div className="max-w-lg mx-auto">
             <h2 className="text-xl font-display font-bold text-center mb-6">{t.catOfDay}</h2>
             <div className="relative rounded-2xl overflow-hidden shadow-lg">
-              <img src={catOfDay.image_url} alt={catOfDay.name} className="w-full h-80 object-cover" />
+              <img src={catOfDay.image_url} alt={`${catOfDay.name} – ${catOfDay.shelter_city}`} className="w-full h-80 object-cover" />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h3 className="text-2xl font-display font-bold text-white">{catOfDay.name}</h3>
                 <p className="text-sm text-white/80 mt-1">📍 {catOfDay.shelter_city}</p>
@@ -65,24 +150,30 @@ export function Home({ onNavigate }: HomeProps) {
 
       {/* Stats */}
       <section className="py-12 px-4 border-y border-cat-sand">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="text-3xl font-display font-bold text-primary-600">{stats ? stats.totalCats : "..."}</div>
-            <div className="text-gray-500 text-sm mt-1">{t.catsWaiting}</div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="text-3xl font-display font-bold text-warm-600">{stats ? stats.totalShelters : "..."}</div>
-            <div className="text-gray-500 text-sm mt-1">{t.sheltersInDb}</div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="text-3xl font-display font-bold text-cat-orange">16</div>
-            <div className="text-gray-500 text-sm mt-1">{t.voivodeships}</div>
-          </div>
-        </div>
-        {stats?.lastFetched && (
-          <p className="text-center text-xs text-gray-400 mt-4">
-            {t.lastUpdated}: {new Date(stats.lastFetched).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-          </p>
+        {statsLoading && <StatsSkeleton />}
+        {!statsLoading && statsError && <InlineError message={statsError} onRetry={fetchStats} />}
+        {!statsLoading && !statsError && (
+          <>
+            <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="text-3xl font-display font-bold text-primary-600">{stats ? stats.totalCats : "..."}</div>
+                <div className="text-gray-500 text-sm mt-1">{t.catsWaiting}</div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="text-3xl font-display font-bold text-warm-600">{stats ? stats.totalShelters : "..."}</div>
+                <div className="text-gray-500 text-sm mt-1">{t.sheltersInDb}</div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="text-3xl font-display font-bold text-cat-orange">16</div>
+                <div className="text-gray-500 text-sm mt-1">{t.voivodeships}</div>
+              </div>
+            </div>
+            {stats?.lastFetched && (
+              <p className="text-center text-xs text-gray-500 mt-4">
+                {t.lastUpdated}: {new Date(stats.lastFetched).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+          </>
         )}
       </section>
 

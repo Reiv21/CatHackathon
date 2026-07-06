@@ -111,7 +111,7 @@ export function ReportStray() {
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayImageUrl}</label>
           <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })}
             placeholder="https://..." className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             {lang === "pl"
               ? "Wrzuć zdjęcie na imgur.com lub postimg.cc i wklej link. Nie przechowujemy zdjęć."
               : "Upload your photo to imgur.com or postimg.cc and paste the link. We don't store images."}

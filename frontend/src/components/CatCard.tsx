@@ -21,8 +21,8 @@ export function CatCard({ cat }: CatCardProps) {
     <>
       {/* Lightbox */}
       {lightbox && cat.image_url && (
-        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setLightbox(false)}>
-          <img src={cat.image_url} alt={cat.name} className="max-w-full max-h-full rounded-xl object-contain" />
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setLightbox(false)} role="dialog" aria-label={`${cat.name} – ${cat.shelter_city}`}>
+          <img src={cat.image_url} alt={`${cat.name} – ${cat.shelter_city}`} className="max-w-full max-h-full rounded-xl object-contain" />
         </div>
       )}
 
@@ -32,13 +32,13 @@ export function CatCard({ cat }: CatCardProps) {
           {cat.image_url ? (
           <img
             src={cat.image_url}
-            alt={cat.name}
+            alt={`${cat.name} – ${cat.shelter_city}`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-warm-50">
-            <span className="text-5xl opacity-30">🐱</span>
+            <span className="text-5xl opacity-30" aria-hidden="true">🐱</span>
           </div>
         )}
       </div>
@@ -66,7 +66,7 @@ export function CatCard({ cat }: CatCardProps) {
         </div>
 
         {/* Shelter */}
-        <div className="text-xs text-gray-400 border-t border-gray-100 pt-3">
+        <div className="text-xs text-gray-500 border-t border-gray-100 pt-3">
           <p className="flex items-center gap-1">
             <span>📍</span>
             <span className="font-medium text-gray-600">{cat.shelter_city}</span>
@@ -88,7 +88,8 @@ export function CatCard({ cat }: CatCardProps) {
               const url = cat.source_url || cat.shelter_url || window.location.href;
               navigator.clipboard.writeText(url);
             }}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-gray-500 hover:text-gray-700"
+            aria-label={lang === "pl" ? "Kopiuj link" : "Copy link"}
             title="Share"
           >
             📋

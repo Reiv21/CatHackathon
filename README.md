@@ -1,113 +1,208 @@
 # Mrucznik 🐱
 
-**Cat adoption portal** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with adoption guides.
+**Cat adoption portal for the "World Cat Domination Day" (Światowy Dzień Kociej Dominacji) hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with gamified domination tracking.
 
-## Features
+---
 
-- 🔍 **Search** — find cats by name, city, or shelter
-- 🗺️ **Interactive map** — browse shelters across Poland with cat counts
-- 📖 **Adoption guides** — first cat, home prep, costs, FIV/FeLV info, vet checklist
-- 🤖 **Smart scraping** — config-driven scrapers for 40+ shelter websites
-- ✅ **Auto-validation** — removes junk entries, duplicates, and non-cat results
-
-## Architecture
+## Architecture Overview
 
 ```mermaid
-graph TD
-    subgraph "Data Pipeline"
-        SC[Scraper v4<br/>Config-driven]
-        VL[Validator<br/>Quality filter]
-        JSON[(data/cats.json<br/>data/shelters.json)]
-    end
-
-    subgraph "API Server"
-        EX[Express.js<br/>+ helmet + CORS]
-    end
-
-    subgraph "Frontend"
-        FE[React + Vite<br/>TailwindCSS + Leaflet]
-    end
-
-    SC --> VL --> JSON
-    EX --> JSON
-    FE --> EX
+graph LR
+    A[Cheerio<br/>Scraping] --> B[Temporal.io<br/>Orchestration]
+    B --> C[SQLite / better-sqlite3<br/>Storage]
+    C --> D[JSON Export<br/>data/]
+    D --> E[Express.js<br/>API Server]
+    E --> F[React / Vite<br/>Frontend]
 ```
 
-## Quick Start
+### Data Flow
+
+1. **Cheerio** scrapes cat listings from 40+ shelter websites using config-driven CSS selectors
+2. **Temporal.io** orchestrates the scraping pipeline — parent workflow spawns child workflows per shelter with retry and exponential backoff
+3. **SQLite** (better-sqlite3 in WAL mode) stores shelters and cats with foreign key relationships
+4. **JSON Export** activity atomically writes `data/shelters.json` and `data/cats.json` after sync completes
+5. **Express.js** serves REST API endpoints reading from the exported JSON files, secured with Helmet and CORS
+6. **React/Vite** frontend displays interactive map, cat search, domination tracker, and achievement badges
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Node.js 20+ (LTS recommended)
+- Temporal server running locally ([install guide](https://docs.temporal.io/cli#install))
+- npm (bundled with Node.js)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/CatHackathon.git
+   cd CatHackathon
+   ```
+
+2. Install backend dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Install frontend dependencies:
+   ```bash
+   cd frontend && npm install && cd ..
+   ```
+
+4. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and set the required values (see [Environment Variables](#environment-variables)).
+
+5. Start the Temporal server (separate terminal):
+   ```bash
+   temporal server start-dev
+   ```
+
+6. Verify setup:
+   ```bash
+   npm run server &
+   curl http://localhost:3000/api/health
+   ```
+   You should receive `{"status":"ok", ...}` confirming the server is running.
+
+---
+
+## Deployment
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | API server listen port | `3000` |
+| `FRONTEND_ORIGIN` | Allowed CORS origin for the frontend | `http://localhost:5173` |
+| `ADMIN_PASSWORD` | Password for admin login (sync trigger, status) | *(required)* |
+| `TEMPORAL_ADDRESS` | Temporal server host:port | `localhost:7233` |
+
+### Build Commands
 
 ```bash
-# Install dependencies
-npm install
-cd frontend && npm install && cd ..
+# Build backend (TypeScript → JavaScript)
+npm run build
 
-# Scrape fresh data (takes ~15 min)
-npm run scrape
-
-# Start API server
-npm run server
-
-# Start frontend dev server (in another terminal)
-cd frontend && npm run dev
+# Build frontend for production
+cd frontend && npm run build && cd ..
 ```
 
-The frontend runs at `http://localhost:5173` with API proxy to port 3000.
+### Running in Production
+
+```bash
+# Start Temporal worker (background)
+npm run worker &
+
+# Start API server (serves API + static frontend from frontend/dist)
+npm run server &
+```
+
+The API server serves the built frontend from `frontend/dist/` and the REST API on the configured `PORT`.
+
+---
+
+## Security
+
+For full details, see [SECURITY.md](./SECURITY.md).
+
+Key measures applied:
+
+- **Input sanitization** — all search queries and IDs are validated/sanitized before use (`sanitizeSearchQuery`, `validateShelterId`)
+- **HTTP security headers (Helmet)** — CSP, HSTS (1 year + includeSubDomains), X-Content-Type-Options: nosniff, X-Powered-By removed
+- **CORS** — restricted to configured `FRONTEND_ORIGIN`; credentials mode enforced
+- **Authentication** — Bearer token for admin endpoints; rate-limited login to prevent brute force
+- **Graceful shutdown** — SIGTERM/SIGINT drain connections within 10s before exit
+
+---
+
+## Technology Stack
+
+### Scraping & Data Pipeline
+
+| Technology | Purpose |
+|------------|---------|
+| [Cheerio](https://cheerio.js.org/) | HTML parsing and CSS-selector-based cat data extraction |
+| [Temporal.io](https://temporal.io/) | Workflow orchestration with retries and observability |
+| [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Embedded SQLite database in WAL mode for structured storage |
+
+### API Server
+
+| Technology | Purpose |
+|------------|---------|
+| [Express.js 5](https://expressjs.com/) | HTTP server and REST API routing |
+| [Helmet](https://helmetjs.github.io/) | Security headers (CSP, HSTS, nosniff) |
+| [CORS](https://github.com/expressjs/cors) | Cross-origin resource sharing configuration |
+| [dotenv](https://github.com/motdotla/dotenv) | Environment variable loading from .env |
+
+### Frontend
+
+| Technology | Purpose |
+|------------|---------|
+| [React 18](https://react.dev/) | UI component library |
+| [Vite](https://vitejs.dev/) | Frontend build tool and dev server |
+| [TailwindCSS](https://tailwindcss.com/) | Utility-first CSS framework |
+| [Leaflet](https://leafletjs.com/) + react-leaflet | Interactive shelter map |
+| [vite-plugin-compression](https://github.com/vbenjs/vite-plugin-compression) | Gzip asset compression for production builds |
+
+### Testing
+
+| Technology | Purpose |
+|------------|---------|
+| [Vitest](https://vitest.dev/) | Unit and integration test runner |
+| [fast-check](https://fast-check.dev/) | Property-based testing for pure logic |
+| [supertest](https://github.com/ladjs/supertest) | HTTP endpoint integration testing |
+
+### Infrastructure
+
+| Technology | Purpose |
+|------------|---------|
+| [GitHub Actions](https://github.com/features/actions) | CI pipeline (lint, test, build) |
+| [TypeScript](https://www.typescriptlang.org/) | Static typing across backend and frontend |
+| [tsx](https://github.com/privatenumber/tsx) | TypeScript execution without pre-compilation |
+
+---
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run scrape` | Full pipeline: scrape all shelters + validate |
-| `npm run scrape-only` | Scrape without validation |
-| `npm run validate` | Run validation/cleanup on existing data |
-| `npm run server` | Start Express API server (port 3000) |
-| `npm test` | Run backend tests |
-| `cd frontend && npm run dev` | Frontend dev server |
+| `npm run server` | Start Express API server |
+| `npm run worker` | Start Temporal worker |
+| `npm run client` | Trigger sync workflow via Temporal client |
+| `npm run scrape` | Full scrape pipeline (all shelters + validate) |
+| `npm run build` | Compile backend TypeScript |
+| `npm test` | Run backend tests (Vitest) |
+| `npm run export-data` | Export SQLite data to JSON manually |
+| `cd frontend && npm run dev` | Frontend dev server (port 5173) |
 | `cd frontend && npm run build` | Production frontend build |
 
-## Tech Stack
+---
 
-| Component | Technology |
-|-----------|-----------|
-| Scraping | Node.js + Cheerio (config-driven) |
-| API | Express.js + helmet + CORS |
-| Data | JSON files (no database needed) |
-| Frontend | React 18 + Vite + TailwindCSS |
-| Map | Leaflet (react-leaflet) |
-| Testing | Vitest + fast-check |
-| CI | GitHub Actions |
-| Orchestration | Temporal.io (optional, for scheduled scraping) |
+## Contributing
 
-## Data Management
+### Code Style
 
-Cat and shelter data lives in `data/` as editable JSON files:
+- **TypeScript** for all source files (strict mode enabled)
+- **ESLint** + Prettier for formatting consistency
+- Use `const` by default; prefer immutable patterns
+- Name files in kebab-case; name exports in camelCase/PascalCase
 
-- `data/cats.json` — all cats with name, description, image, source URL, metadata
-- `data/shelters.json` — shelters with coordinates, URLs, cat counts
+### PR Process
 
-Scraper config in `scraper-config.json` — CSS selectors per shelter domain.
+1. Create a feature branch from `main`: `feature/your-feature-name` or `fix/bug-description`
+2. Keep PRs focused — one feature or fix per PR
+3. Include a description of what changed and why
+4. Ensure `npm test` passes and there are no TypeScript errors (`npm run build`)
+5. Request review from at least one team member
+6. Squash-merge into `main` after approval
 
-### Adding a new shelter
-
-1. Add entry to `data/shelters.json` with `website_url`
-2. Add CSS selectors to `scraper-config.json` for the domain
-3. Run `npm run scrape`
-
-## Project Structure
-
-```
-├── data/                    # JSON data files (cats, shelters)
-├── frontend/                # React SPA (Vite + TailwindCSS)
-│   └── src/components/      # UI components
-├── src/
-│   ├── server.ts            # Express API server
-│   ├── scraper-v4.ts        # Config-driven scraper
-│   ├── validate-data.ts     # Post-scrape validation
-│   ├── geocoding.ts         # City → coordinates mapping
-│   └── validation.ts        # Input sanitization
-├── scraper-config.json      # Per-site CSS selectors
-├── .github/workflows/ci.yml # GitHub Actions CI
-└── package.json
-```
+---
 
 ## License
 

@@ -6,6 +6,30 @@
 
 @layer base {
   body {
-    @apply bg-cat-cream text-cat-dark font-sans antialiased;
+    @apply bg-cat-cream text-cat-dark font-sans antialiased overflow-x-hidden;
+  }
+
+  /* Accessible focus indicator - 3:1 contrast ratio against white/cream backgrounds */
+  *:focus-visible {
+    outline: 2px solid #2563eb; /* blue-600 — meets 3:1 on white */
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus outline for mouse/touch — only show for keyboard */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+  /* Minimum touch target for mobile interactive elements (WCAG 2.5.5 / 14.2) */
+  @media (max-width: 767px) {
+    button,
+    a,
+    select,
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 }

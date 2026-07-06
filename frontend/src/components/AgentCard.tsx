@@ -51,7 +51,7 @@ export function AgentCard({ cat }: AgentCardProps) {
           <h3 className="font-mono font-bold text-tactical-amber text-sm truncate">
             {cat.name}
           </h3>
-          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">
             {displayDescription}
           </p>
           <div className="flex gap-2 mt-2 text-xs text-gray-500 font-mono">

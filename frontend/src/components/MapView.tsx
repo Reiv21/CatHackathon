@@ -48,7 +48,7 @@ export function MapView() {
           </div>
         )}
         {error && (
-          <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-[1000]">
+          <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-[1000]" role="alert" aria-live="assertive">
             <div className="text-center">
               <p className="text-red-500 mb-3">{t.failedMap}</p>
               <button onClick={retry} className="px-4 py-2 bg-primary-600 text-white rounded-lg">{t.retry}</button>
@@ -69,7 +69,7 @@ export function MapView() {
                 <div className="text-sm">
                   <p className="font-bold">{t.strayReported}</p>
                   <p className="text-gray-600">{s.description || s.city}</p>
-                  <p className="text-xs text-gray-400">{new Date(s.reported_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500">{new Date(s.reported_at).toLocaleDateString()}</p>
                 </div>
               </Popup>
             </CircleMarker>
@@ -85,6 +85,7 @@ export function MapView() {
         {selectedShelter && shelterCats && shelterCats.length > 0 && (
           <button
             onClick={() => setSidebarExpanded(!sidebarExpanded)}
+            aria-label={sidebarExpanded ? (lang === "pl" ? "Zwiń panel" : "Minimize panel") : (lang === "pl" ? "Rozwiń panel" : "Expand panel")}
             className="mb-2 text-xs text-primary-600 hover:text-primary-700 font-medium"
           >
             {sidebarExpanded ? (lang === "pl" ? "↙ Zwiń" : "↙ Minimize") : (lang === "pl" ? "↗ Rozwiń" : "↗ Expand")}
@@ -112,14 +113,36 @@ export function MapView() {
         )}
 
         {!selectedShelter && (
-          <div className="text-center text-gray-400 py-6">
+          <div className="text-center text-gray-500 py-6">
             <p className="text-sm">{t.clickShelter}</p>
           </div>
         )}
 
+        {/* Text-based shelter list alternative for accessibility */}
+        {shelters && !selectedShelter && shelters.length > 0 && (
+          <details className="mt-4 border-t border-cat-sand pt-3">
+            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 font-medium">
+              {lang === "pl" ? "📋 Lista schronisk (tekst)" : "📋 Shelter list (text)"}
+            </summary>
+            <ul className="mt-2 space-y-1 max-h-60 overflow-y-auto text-xs text-gray-600" role="list">
+              {shelters.map((s) => (
+                <li key={s.id_zewnetrzne}>
+                  <button
+                    onClick={() => setSelectedShelter(s)}
+                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="font-medium">{s.name}</span> – {s.city}, {s.voivodeship}
+                    {s.cat_count > 0 && <span className="text-primary-600 ml-1">({s.cat_count} 🐱)</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+
         {selectedShelter && (
           <div>
-            <button onClick={() => setSelectedShelter(null)} className="text-sm text-primary-600 hover:text-primary-700 mb-3">
+            <button onClick={() => setSelectedShelter(null)} aria-label={lang === "pl" ? "Powrót do mapy" : "Back to map"} className="text-sm text-primary-600 hover:text-primary-700 mb-3">
               {t.backToMap}
             </button>
             <h3 className="font-display font-bold text-lg mb-1">{selectedShelter.name}</h3>
@@ -133,16 +156,16 @@ export function MapView() {
 
             {!catsLoading && shelterCats && shelterCats.length > 0 && (
               <div className="flex flex-col gap-3">
-                <p className="text-xs text-gray-400">{shelterCats.length} {t.catsAvailable}</p>
+                <p className="text-xs text-gray-500">{shelterCats.length} {t.catsAvailable}</p>
                 {shelterCats.map((cat) => <CatCard key={cat.id} cat={cat} />)}
               </div>
             )}
 
             {!catsLoading && shelterCats && shelterCats.length === 0 && (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-gray-500">
                 <div className="text-3xl mb-3">🐾</div>
                 <p className="text-sm">{t.noCatsListed}</p>
-                <p className="text-xs mt-2 text-gray-300">{t.notAllShelters}</p>
+                <p className="text-xs mt-2 text-gray-400">{t.notAllShelters}</p>
               </div>
             )}
           </div>

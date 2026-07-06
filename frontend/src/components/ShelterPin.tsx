@@ -11,8 +11,15 @@ export function ShelterPin({ shelter, onSelect }: ShelterPinProps) {
   const { lang } = useI18n();
   if (shelter.latitude === null || shelter.longitude === null) return null;
 
+  const markerTitle = `${shelter.name} – ${shelter.city}${shelter.cat_count > 0 ? ` (${shelter.cat_count} ${lang === "pl" ? "kotów" : "cats"})` : ""}`;
+
   return (
-    <Marker position={[shelter.latitude, shelter.longitude]} eventHandlers={{ click: onSelect }}>
+    <Marker
+      position={[shelter.latitude, shelter.longitude]}
+      eventHandlers={{ click: onSelect }}
+      title={markerTitle}
+      alt={markerTitle}
+    >
       <Popup>
         <div className="text-sm">
           <p className="font-bold">{shelter.name}</p>

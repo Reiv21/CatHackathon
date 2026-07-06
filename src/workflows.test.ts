@@ -5,11 +5,13 @@ const {
   mockFetchAndSaveSheltersActivity,
   mockScrapeCatsActivity,
   mockSaveCatsActivity,
+  mockExportDataActivity,
   mockExecuteChild,
 } = vi.hoisted(() => ({
   mockFetchAndSaveSheltersActivity: vi.fn(),
   mockScrapeCatsActivity: vi.fn(),
   mockSaveCatsActivity: vi.fn(),
+  mockExportDataActivity: vi.fn(),
   mockExecuteChild: vi.fn(),
 }));
 
@@ -19,6 +21,7 @@ vi.mock("@temporalio/workflow", () => {
       fetchAndSaveSheltersActivity: mockFetchAndSaveSheltersActivity,
       scrapeCatsActivity: mockScrapeCatsActivity,
       saveCatsActivity: mockSaveCatsActivity,
+      exportDataActivity: mockExportDataActivity,
     }),
     executeChild: (...args: unknown[]) => mockExecuteChild(...args),
   };
@@ -30,6 +33,7 @@ import { parentSyncWorkflow, catScraperWorkflow } from "./workflows.js";
 describe("parentSyncWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockExportDataActivity.mockResolvedValue({ shelters: 0, cats: 0 });
   });
 
   it("calls fetchAndSaveSheltersActivity first, then fans out child workflows", async () => {

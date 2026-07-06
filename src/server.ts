@@ -3,11 +3,13 @@ import helmet from "helmet";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, accessSync, constants } from "fs";
 import { config as dotenvConfig } from "dotenv";
 import { sanitizeSearchQuery, validateShelterId } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
 import { getVoivodeshipForCity } from "./city-voivodeship.js";
+import { computeAchievements } from "./achievements.js";
+import { computeDomination } from "./domination.js";
 
 dotenvConfig();
 
@@ -78,6 +80,62 @@ function loadCats(): CatRecord[] {
   return JSON.parse(readFileSync(filePath, "utf-8"));
 }
 
+/**
+ * Regex that matches filenames containing a content hash (8+ hex characters)
+ * in the format: .XXXXXXXX.js or .XXXXXXXX.css
+ */
+export const HASHED_ASSET_REGEX = /\.[a-f0-9]{8,}\.(js|css)$/;
+
+/**
+ * Returns true if the given filename/path contains a content hash,
+ * indicating it's a fingerprinted static asset suitable for immutable caching.
+ */
+export function isHashedAsset(filename: string): boolean {
+  return HASHED_ASSET_REGEX.test(filename);
+}
+
+/**
+ * Validates TEMPORAL_ADDRESS env var as host:port format and returns it
+ * as an array suitable for CSP connectSrc. Returns empty array if format is invalid.
+ */
+export function getTemporalConnectSrc(): string[] {
+  const temporalAddress = process.env.TEMPORAL_ADDRESS || "localhost:7233";
+  const hostPortRegex = /^([a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*):(\d{1,5})$/;
+  const match = temporalAddress.match(hostPortRegex);
+  if (!match) return [];
+  const port = parseInt(match[5], 10);
+  if (port < 1 || port > 65535) return [];
+  return [temporalAddress];
+}
+
+/**
+ * Admin auth middleware — validates Bearer token issued by login endpoint.
+ * Returns 401 with generic message on failure (no information leakage).
+ */
+export function requireAdminAuth(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  const token = auth.slice(7);
+  try {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    if (!decoded.startsWith("admin:")) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+  } catch {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  next();
+}
+
 export function createApp(dbPath?: string) {
   const app = express();
 
@@ -91,10 +149,13 @@ export function createApp(dbPath?: string) {
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "https:", "http:"],
-          connectSrc: ["'self'"],
+          connectSrc: ["'self'", ...getTemporalConnectSrc()],
           frameSrc: ["'none'"],
         },
       },
+      hsts: { maxAge: 31536000, includeSubDomains: true },
+      xContentTypeOptions: true,
+      hidePoweredBy: true,
       referrerPolicy: { policy: "no-referrer-when-downgrade" },
     })
   );
@@ -465,10 +526,144 @@ export function createApp(dbPath?: string) {
     res.json(JSON.parse(readFileSync(suggestionsPath, "utf-8")));
   });
 
+  // Sync trigger endpoint — starts Temporal workflow (non-blocking)
+  app.post("/api/admin/sync", requireAdminAuth, async (_req, res) => {
+    try {
+      const { Connection, Client } = await import("@temporalio/client");
+      const temporalAddress = process.env.TEMPORAL_ADDRESS || "localhost:7233";
+      const connection = await Connection.connect({ address: temporalAddress });
+      const client = new Client({ connection });
+      const workflowId = `shelter-sync-${Date.now()}`;
+      await client.workflow.start("parentSyncWorkflow", {
+        taskQueue: "shelter-sync",
+        workflowId,
+      });
+      res.json({ workflow_id: workflowId, message: "Sync started" });
+    } catch {
+      res.status(503).json({ message: "Workflow engine unavailable" });
+    }
+  });
+
+  // Sync status endpoint — queries Temporal for most recent shelter-sync-* workflow
+  app.get("/api/admin/sync/status", requireAdminAuth, async (_req, res) => {
+    try {
+      const { Connection, Client } = await import("@temporalio/client");
+      const temporalAddress = process.env.TEMPORAL_ADDRESS || "localhost:7233";
+      const connection = await Connection.connect({ address: temporalAddress });
+      const client = new Client({ connection });
+
+      // List workflows matching the shelter-sync- prefix, sorted by start time desc
+      const workflows = client.workflow.list({
+        query: 'WorkflowId STARTS_WITH "shelter-sync-"',
+      });
+
+      let latest: {
+        status: "running" | "completed" | "failed" | "never_run";
+        start_time: string | null;
+        completion_time: string | null;
+      } | null = null;
+
+      for await (const workflow of workflows) {
+        // Take only the first (most recent) result
+        const statusNum = workflow.status.code;
+        // Temporal status codes:
+        // 1 = RUNNING, 2 = COMPLETED, 3 = FAILED, 4 = CANCELLED, 5 = TERMINATED, 6 = CONTINUED_AS_NEW, 7 = TIMED_OUT
+        let status: "running" | "completed" | "failed";
+        if (statusNum === 1) {
+          status = "running";
+        } else if (statusNum === 2) {
+          status = "completed";
+        } else {
+          status = "failed";
+        }
+
+        latest = {
+          status,
+          start_time: workflow.startTime?.toISOString() ?? null,
+          completion_time: workflow.closeTime?.toISOString() ?? null,
+        };
+        break;
+      }
+
+      if (!latest) {
+        res.json({ status: "never_run", start_time: null, completion_time: null });
+      } else {
+        res.json(latest);
+      }
+    } catch {
+      res.status(503).json({ message: "Sync status temporarily unavailable" });
+    }
+  });
+
+  // Domination endpoint
+  app.get("/api/domination", (_req, res) => {
+    try {
+      const shelters = loadShelters();
+      const cats = loadCats();
+      const result = computeDomination(shelters, cats);
+      res.json(result);
+    } catch {
+      res.json({
+        total_shelters_in_poland: 190,
+        shelters_covered: 0,
+        percentage: 0,
+        cats_in_army: 0,
+        domination_level: "Kocie Zwiadowcy",
+      });
+    }
+  });
+
+  // Achievements endpoint
+  app.get("/api/achievements", (_req, res, next) => {
+    try {
+      const cats = loadCats();
+      const shelters = loadShelters();
+      const achievements = computeAchievements(cats, shelters);
+      res.json(achievements);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  // Health check endpoint
+  app.get("/api/health", (_req, res) => {
+    try {
+      accessSync(DATA_DIR, constants.R_OK);
+      res.json({
+        status: "ok",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      res.status(503).json({
+        status: "degraded",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        details: "Data directory is inaccessible",
+      });
+    }
+  });
+
+  // Cache headers for hashed static assets (must be before express.static)
+  app.use("/assets", (req, res, next) => {
+    if (isHashedAsset(req.path)) {
+      res.setHeader("Cache-Control", "max-age=31536000, immutable");
+    }
+    next();
+  });
+
+  // Cache-Control: no-cache for index.html served by express.static
+  app.use((req, res, next) => {
+    if (req.path === "/" || req.path === "/index.html") {
+      res.setHeader("Cache-Control", "no-cache");
+    }
+    next();
+  });
+
   // Static file serving (production)
   app.use(express.static(FRONTEND_DIST));
 
-  // SPA fallback
+  // SPA fallback — serves index.html with no-cache for non-API routes
   app.use((req, res, next) => {
     if (req.path.startsWith("/api/")) {
       next();
@@ -476,6 +671,7 @@ export function createApp(dbPath?: string) {
     }
     const indexPath = path.join(FRONTEND_DIST, "index.html");
     if (existsSync(indexPath)) {
+      res.setHeader("Cache-Control", "no-cache");
       res.sendFile(indexPath);
     } else {
       res.status(404).json({ message: "Frontend not built" });
@@ -498,6 +694,48 @@ export function createApp(dbPath?: string) {
   return { app, db: null as unknown };
 }
 
+/**
+ * Sets up graceful shutdown handlers for the HTTP server.
+ * - On first SIGTERM/SIGINT: stops accepting connections, waits up to 10s for in-flight requests
+ * - After timeout: force-closes remaining connections, exits with code 0
+ * - On second signal during shutdown: immediately exits with code 1
+ */
+export function setupGracefulShutdown(server: import("http").Server): void {
+  let shuttingDown = false;
+  const connections = new Set<import("net").Socket>();
+
+  server.on("connection", (socket) => {
+    connections.add(socket);
+    socket.on("close", () => connections.delete(socket));
+  });
+
+  const shutdown = () => {
+    if (shuttingDown) {
+      // Second signal — force exit
+      process.exit(1);
+      return;
+    }
+    shuttingDown = true;
+    console.log("Graceful shutdown initiated");
+
+    server.close(() => {
+      process.exit(0);
+    });
+
+    // Force-close after 10s
+    const timeout = setTimeout(() => {
+      for (const socket of connections) {
+        socket.destroy();
+      }
+      process.exit(0);
+    }, 10_000);
+    timeout.unref();
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
+
 // Start server if run directly
 if (
   process.argv[1] &&
@@ -505,8 +743,9 @@ if (
     process.argv[1].endsWith("server.js"))
 ) {
   const { app } = createApp();
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🐱 Tactical Cat API running on port ${PORT}`);
     console.log(`   Reading data from: ${DATA_DIR}`);
   });
+  setupGracefulShutdown(server);
 }

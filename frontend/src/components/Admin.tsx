@@ -98,10 +98,10 @@ export function Admin() {
 
       <h2 className="text-lg font-semibold mb-4">Shelter Suggestions ({suggestions.length})</h2>
 
-      {loading && <p className="text-gray-400">Loading...</p>}
+      {loading && <p className="text-gray-500">Loading...</p>}
 
       {suggestions.length === 0 && !loading && (
-        <p className="text-gray-400 text-center py-8">No suggestions yet.</p>
+        <p className="text-gray-500 text-center py-8">No suggestions yet.</p>
       )}
 
       <div className="flex flex-col gap-3">
@@ -109,11 +109,11 @@ export function Admin() {
           <div key={i} className="bg-white border border-cat-sand rounded-xl p-4">
             <div className="flex justify-between">
               <h3 className="font-semibold">{s.name}</h3>
-              <span className="text-xs text-gray-400">{new Date(s.submitted_at).toLocaleDateString()}</span>
+              <span className="text-xs text-gray-500">{new Date(s.submitted_at).toLocaleDateString()}</span>
             </div>
             <p className="text-sm text-gray-600">{s.city}{s.voivodeship && `, ${s.voivodeship}`}</p>
             {s.website_url && <a href={s.website_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600">{s.website_url}</a>}
-            {s.submitter_email && <p className="text-xs text-gray-400 mt-1">From: {s.submitter_email}</p>}
+            {s.submitter_email && <p className="text-xs text-gray-500 mt-1">From: {s.submitter_email}</p>}
           </div>
         ))}
       </div>
@@ -133,7 +133,7 @@ export function Admin() {
             </button>
           </div>
         ))}
-        {strayReports.length === 0 && <p className="text-gray-400 text-sm">No stray reports.</p>}
+        {strayReports.length === 0 && <p className="text-gray-500 text-sm">No stray reports.</p>}
       </div>
     </div>
   );

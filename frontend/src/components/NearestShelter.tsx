@@ -79,13 +79,13 @@ export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
         </button>
       )}
 
-      {status === "loading" && <p className="text-sm text-gray-400">{t.gettingLocation}</p>}
+      {status === "loading" && <p className="text-sm text-gray-500">{t.gettingLocation}</p>}
       {status === "error" && <p className="text-sm text-red-500">{t.locationDenied}</p>}
 
       {status === "outside" && (
         <div className="text-center py-3">
           <p className="text-sm text-gray-600">{t.outsidePoland}</p>
-          <p className="text-xs text-gray-400 mt-1">{t.outsidePolandDesc}</p>
+          <p className="text-xs text-gray-500 mt-1">{t.outsidePolandDesc}</p>
           <button onClick={() => setStatus("idle")} className="text-xs text-primary-600 mt-2">{t.tryAgain}</button>
         </div>
       )}
@@ -105,7 +105,7 @@ export function NearestShelter({ shelters, onSelect }: NearestShelterProps) {
               </p>
             </button>
           ))}
-          <button onClick={() => setStatus("idle")} className="text-xs text-gray-400 mt-1">{t.searchAgain}</button>
+          <button onClick={() => setStatus("idle")} className="text-xs text-gray-500 mt-1">{t.searchAgain}</button>
         </div>
       )}
     </div>

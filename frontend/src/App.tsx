@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapView } from "./components/MapView";
 import { CatSearch } from "./components/CatSearch";
 import { Guides } from "./components/Guides";
@@ -21,6 +21,7 @@ export default function App() {
   const [page, setPageState] = useState<Page>(getPageFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
+  const mainRef = useRef<HTMLElement>(null);
 
   const setPage = (p: Page) => {
     setPageState(p);
@@ -32,6 +33,22 @@ export default function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  // Move focus to main content heading on page navigation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mainRef.current) {
+        const heading = mainRef.current.querySelector("h1, h2, [tabindex='-1']");
+        if (heading instanceof HTMLElement) {
+          heading.setAttribute("tabindex", "-1");
+          heading.focus();
+        } else {
+          mainRef.current.focus();
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [page]);
 
   const navigate = (p: Page) => { setPage(p); setMenuOpen(false); window.scrollTo(0, 0); };
 
@@ -46,7 +63,7 @@ export default function App() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            <nav className="flex items-center gap-1">
+            <nav aria-label={lang === "pl" ? "Nawigacja główna" : "Main navigation"} className="flex items-center gap-1">
               {([
                 ["home", t.home],
                 ["search", t.findCat],
@@ -68,6 +85,7 @@ export default function App() {
               ))}
             </nav>
             <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
+              aria-label={lang === "en" ? "Switch to Polish" : "Przełącz na angielski"}
               className="ml-2 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50">
               {lang === "en" ? "🇵🇱 PL" : "🇬🇧 EN"}
             </button>
@@ -76,11 +94,15 @@ export default function App() {
           {/* Mobile: lang + hamburger */}
           <div className="flex md:hidden items-center gap-2">
             <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
+              aria-label={lang === "en" ? "Switch to Polish" : "Przełącz na angielski"}
               className="px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg">
               {lang === "en" ? "🇵🇱" : "🇬🇧"}
             </button>
-            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 rounded-lg hover:bg-gray-100">
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? (lang === "pl" ? "Zamknij menu" : "Close menu") : (lang === "pl" ? "Otwórz menu" : "Open menu")}
+              aria-expanded={menuOpen}
+              className="p-2 rounded-lg hover:bg-gray-100">
+              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 {menuOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -92,7 +114,7 @@ export default function App() {
 
         {/* Mobile dropdown menu */}
         {menuOpen && (
-          <nav className="md:hidden border-t border-cat-sand bg-white px-4 py-2 space-y-1">
+          <nav aria-label={lang === "pl" ? "Menu mobilne" : "Mobile menu"} className="md:hidden border-t border-cat-sand bg-white px-4 py-2 space-y-1">
             {([
               ["home", t.home],
               ["search", t.findCat],
@@ -115,10 +137,10 @@ export default function App() {
         )}
       </header>
 
-      <main className="flex-1">
+      <main ref={mainRef} className="flex-1" tabIndex={-1}>
         {page === "home" && <Home onNavigate={setPage} />}
         {page === "search" && <div className="flex-1 overflow-y-auto"><CatSearch /></div>}
-        {page === "map" && <div className="h-[calc(100vh-4rem)] overflow-hidden"><MapView /></div>}
+        {page === "map" && <div className="h-[calc(100vh-3.5rem)] overflow-hidden"><MapView /></div>}
         {page === "guides" && <Guides />}
         {page === "suggest" && <SuggestShelter />}
         {page === "volunteer" && <Volunteer />}
@@ -128,7 +150,9 @@ export default function App() {
 
       {/* Back to top bar (mobile) */}
       <div className="md:hidden bg-warm-50 border-t border-cat-sand py-4 px-4 text-center">
-        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-sm text-primary-600 font-medium px-6 py-2 bg-white rounded-full border border-cat-sand shadow-sm">
+        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label={lang === "pl" ? "Przewiń na górę strony" : "Scroll back to top"}
+          className="text-sm text-primary-600 font-medium px-6 py-2 bg-white rounded-full border border-cat-sand shadow-sm">
           ⬆ {lang === "pl" ? "Na górę" : "Back to top"}
         </button>
       </div>
@@ -137,13 +161,13 @@ export default function App() {
         <div className="max-w-7xl mx-auto text-center text-sm">
           <p className="mb-2">{t.footerTitle}</p>
           <p className="text-gray-400 mb-3">{t.footerDesc}</p>
-          <div className="flex justify-center gap-4 text-xs text-gray-600">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-gray-400">
+          <div className="flex justify-center gap-4 text-xs text-gray-400">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="hover:text-cat-sand">
               {lang === "pl" ? "⬆ Na górę" : "⬆ Back to top"}
             </button>
-            <button onClick={() => navigate("suggest")} className="hover:text-gray-400">{t.addShelter}</button>
-            <a href="https://github.com/Reiv21/CatHackathon" target="_blank" rel="noreferrer" className="hover:text-gray-400">GitHub</a>
-            <button onClick={() => navigate("admin")} className="hover:text-gray-400">Admin</button>
+            <button onClick={() => navigate("suggest")} className="hover:text-cat-sand">{t.addShelter}</button>
+            <a href="https://github.com/Reiv21/CatHackathon" target="_blank" rel="noreferrer" className="hover:text-cat-sand">GitHub</a>
+            <button onClick={() => navigate("admin")} className="hover:text-cat-sand">Admin</button>
           </div>
         </div>
       </footer>

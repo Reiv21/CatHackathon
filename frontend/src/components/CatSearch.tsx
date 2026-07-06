@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useSearchCats } from "../hooks/useSearchCats";
 import { CatCard } from "./CatCard";
+import { CatCardSkeletonGrid } from "./Skeletons";
+import { InlineError } from "./InlineError";
 import { useI18n } from "../i18n";
 import { apiFetch } from "../api";
 import type { CatResponse } from "../types";
@@ -29,7 +31,7 @@ export function CatSearch() {
   const [sort, setSort] = useState("");
   const [showStrays, setShowStrays] = useState(false);
   const [strays, setStrays] = useState<Array<{id: number; description: string; image_url: string | null; city: string; reported_at: string}>>([]);
-  const { data: cats, loading, error, pagination, setPage } = useSearchCats(query, voivodeship, sex, sort);
+  const { data: cats, loading, error, pagination, setPage, retry } = useSearchCats(query, voivodeship, sex, sort);
   const { t, lang } = useI18n();
   const [randomCat, setRandomCat] = useState<CatResponse | null>(null);
 
@@ -60,12 +62,12 @@ export function CatSearch() {
       {/* Random cat modal */}
       {randomCat && (
         <div className="max-w-sm mx-auto mb-8 bg-white rounded-2xl shadow-lg overflow-hidden border border-primary-200">
-          {randomCat.image_url && <img src={randomCat.image_url} alt={randomCat.name} className="w-full h-48 object-cover" />}
+          {randomCat.image_url && <img src={randomCat.image_url} alt={`${randomCat.name} – ${randomCat.shelter_city}`} className="w-full h-48 object-cover" />}
           <div className="p-4">
             <h3 className="font-display font-bold text-lg">{randomCat.name}</h3>
             <p className="text-xs text-gray-500">📍 {randomCat.shelter_city}</p>
             {randomCat.source_url && <a href={randomCat.source_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600 mt-2 inline-block">{t.viewOnShelter}</a>}
-            <button onClick={() => setRandomCat(null)} className="block text-xs text-gray-400 mt-2">✕ {lang === "pl" ? "Zamknij" : "Close"}</button>
+            <button onClick={() => setRandomCat(null)} aria-label={lang === "pl" ? "Zamknij" : "Close"} className="block text-xs text-gray-500 mt-2">✕ {lang === "pl" ? "Zamknij" : "Close"}</button>
           </div>
         </div>
       )}
@@ -79,11 +81,11 @@ export function CatSearch() {
             className="w-full bg-white border border-cat-sand rounded-xl pl-12 pr-10 py-3 text-cat-dark placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-200 transition-all"
           />
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          {query && <button onClick={() => setQuery("")} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600">✕</button>}
+          {query && <button onClick={() => setQuery("")} aria-label={lang === "pl" ? "Wyczyść wyszukiwanie" : "Clear search"} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700">✕</button>}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -108,7 +110,7 @@ export function CatSearch() {
           </select>
         </div>
 
-        <p className="text-xs text-gray-400 italic">
+        <p className="text-xs text-gray-500 italic">
           {lang === "pl"
             ? "⚠️ Nie wszystkie dane mogą być kompletne — informacje są zbierane automatycznie ze stron schronisk."
             : "⚠️ Not all data may be complete — information is collected automatically from shelter websites."}
@@ -122,40 +124,37 @@ export function CatSearch() {
       </div>
 
       {/* Loading / Error */}
-      {loading && (
-        <div className="text-center text-gray-400 py-8">
-          <div className="w-8 h-8 border-3 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto mb-3" />
-          <p>{t.searching}</p>
-        </div>
-      )}
-      {error && <p className="text-center text-red-500 py-4">{error}</p>}
+      <div aria-live="polite" aria-atomic="false">
+        {loading && <CatCardSkeletonGrid pageSize={24} />}
+        {!loading && error && <div role="alert" aria-live="assertive"><InlineError message={error} onRetry={retry} /></div>}
 
-      {/* Count */}
-      {!loading && pagination && pagination.total > 0 && (
-        <p className="text-sm text-gray-400 mb-4">
-          {pagination.total} {pagination.total === 1 ? t.catFound : t.catsFound}
-        </p>
-      )}
+        {/* Count */}
+        {!loading && pagination && pagination.total > 0 && (
+          <p className="text-sm text-gray-500 mb-4">
+            {pagination.total} {pagination.total === 1 ? t.catFound : t.catsFound}
+          </p>
+        )}
 
-      {/* Empty */}
-      {!loading && cats !== null && cats.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-5xl mb-4">😿</div>
-          <p className="text-gray-500">{t.noCats}</p>
-          <p className="text-sm text-gray-400 mt-1">{t.noCatsHint}</p>
-        </div>
-      )}
+        {/* Empty */}
+        {!loading && cats !== null && cats.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">😿</div>
+            <p className="text-gray-500">{t.noCats}</p>
+            <p className="text-sm text-gray-500 mt-1">{t.noCatsHint}</p>
+          </div>
+        )}
+      </div>
 
       {/* Stray reports */}
       {showStrays && strays.length > 0 && (
         <div className="mb-8">
           <h3 className="text-sm font-semibold text-red-600 mb-3">🐱 {t.strayReported} ({strays.length})</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {strays.map((s) => (
               <div key={s.id} className="bg-white rounded-xl border border-red-200 p-4 shadow-sm">
-                {s.image_url && <img src={s.image_url} alt="stray" className="w-full h-32 object-cover rounded-lg mb-2" />}
+                {s.image_url && <img src={s.image_url} alt={lang === "pl" ? `Zgłoszony kot bezdomny – ${s.city}` : `Reported stray cat – ${s.city}`} className="w-full h-32 object-cover rounded-lg mb-2" />}
                 <p className="text-sm text-gray-700">{s.description || (lang === "pl" ? "Brak opisu" : "No description")}</p>
-                <p className="text-xs text-gray-400 mt-1">📍 {s.city} • {new Date(s.reported_at).toLocaleDateString()}</p>
+                <p className="text-xs text-gray-500 mt-1">📍 {s.city} • {new Date(s.reported_at).toLocaleDateString()}</p>
               </div>
             ))}
           </div>
@@ -164,7 +163,7 @@ export function CatSearch() {
 
       {/* Grid */}
       {cats !== null && cats.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cats.map((cat) => <CatCard key={cat.id} cat={cat} />)}
         </div>
       )}

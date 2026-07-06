@@ -15,6 +15,7 @@ interface UseSearchCatsResult {
   error: string | null;
   pagination: Pagination | null;
   setPage: (page: number) => void;
+  retry: () => void;
 }
 
 interface ApiCatsResponse {
@@ -28,7 +29,12 @@ export function useSearchCats(query: string, voivodeship: string = "", sex: stri
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [page, setPage] = useState(1);
+  const [retryCount, setRetryCount] = useState(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const retry = useCallback(() => {
+    setRetryCount((c) => c + 1);
+  }, []);
 
   // Reset page when query or voivodeship changes
   useEffect(() => { setPage(1); }, [query, voivodeship, sex, sort]);
@@ -72,7 +78,7 @@ export function useSearchCats(query: string, voivodeship: string = "", sex: stri
     }, delay);
 
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
-  }, [query, voivodeship, page, sex, sort, fetchCats]);
+  }, [query, voivodeship, page, sex, sort, fetchCats, retryCount]);
 
-  return { data, loading, error, pagination, setPage };
+  return { data, loading, error, pagination, setPage, retry };
 }

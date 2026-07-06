@@ -40,7 +40,7 @@ export function SuggestShelter() {
     <div className="max-w-lg mx-auto px-4 py-8">
       <h1 className="text-2xl font-display font-bold mb-2">{t.suggestTitle}</h1>
       <p className="text-gray-500 text-sm mb-2">{t.suggestSubtitle}</p>
-      <p className="text-gray-400 text-xs mb-6 italic">{t.suggestWhy}</p>
+      <p className="text-gray-500 text-xs mb-6 italic">{t.suggestWhy}</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
