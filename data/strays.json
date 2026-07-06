@@ -3,9 +3,18 @@
     "id": 1783353130914,
     "description": "test kot",
     "image_url": "https://i.imgur.com/UFhGvtn.png",
-    "latitude": 0,
-    "longitude": 0,
+    "latitude": 50.265,
+    "longitude": 19.023,
     "city": "Katowice",
     "reported_at": "2026-07-06T15:52:10.914Z"
+  },
+  {
+    "id": 1783355619833,
+    "description": "Test 2",
+    "image_url": "https://i.imgur.com/UFhGvtn.png",
+    "latitude": 50.291,
+    "longitude": 19.108,
+    "city": "Sosnowiec",
+    "reported_at": "2026-07-06T16:33:39.833Z"
   }
 ]

@@ -62,7 +62,7 @@ export function MapView() {
           />
           <UserLocation />
           <MapPersist />
-          {showStrays && strays.filter(s => s.latitude !== 0 && s.longitude !== 0).map((s) => (
+          {showStrays && strays.filter(s => s.latitude && s.longitude && !(s.latitude === 0 && s.longitude === 0)).map((s) => (
             <CircleMarker key={s.id} center={[s.latitude, s.longitude]} radius={8}
               pathOptions={{ color: "#e94560", fillColor: "#e94560", fillOpacity: 0.7 }}>
               <Popup>
