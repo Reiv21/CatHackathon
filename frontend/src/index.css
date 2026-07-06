@@ -9,7 +9,7 @@
     @apply bg-cat-cream text-cat-dark font-sans antialiased overflow-x-hidden;
   }
 
-  /* Subtle repeating paw-print pattern in the page background */
+  /* Scattered paw-print pattern — varied sizes and rotations for organic feel */
   #root {
     position: relative;
   }
@@ -19,9 +19,9 @@
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ctext x='10' y='45' font-size='24'%3E🐾%3C/text%3E%3C/svg%3E");
-    background-size: 80px 80px;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ctext x='15' y='35' font-size='20' transform='rotate(-20 15 35)'%3E🐾%3C/text%3E%3Ctext x='120' y='55' font-size='14' transform='rotate(15 120 55)'%3E🐾%3C/text%3E%3Ctext x='60' y='110' font-size='18' transform='rotate(35 60 110)'%3E🐾%3C/text%3E%3Ctext x='155' y='140' font-size='22' transform='rotate(-10 155 140)'%3E🐾%3C/text%3E%3Ctext x='30' y='175' font-size='12' transform='rotate(45 30 175)'%3E🐾%3C/text%3E%3Ctext x='105' y='185' font-size='16' transform='rotate(-30 105 185)'%3E🐾%3C/text%3E%3C/svg%3E");
+    background-size: 200px 200px;
   }
 
   /* Accessible focus indicator - 3:1 contrast ratio against white/cream backgrounds */
