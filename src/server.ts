@@ -103,10 +103,13 @@ export function createApp(dbPath?: string) {
   app.use(
     cors({
       origin: FRONTEND_ORIGIN,
-      methods: ["GET"],
-      allowedHeaders: ["Content-Type", "Accept"],
+      methods: ["GET", "POST"],
+      allowedHeaders: ["Content-Type", "Accept", "Authorization"],
     })
   );
+
+  // JSON body parser (must be before POST routes)
+  app.use(express.json());
 
   // Stats endpoint
   app.get("/api/stats", (_req, res, next) => {
@@ -298,26 +301,30 @@ export function createApp(dbPath?: string) {
     } catch (err) { next(err); }
   });
 
-  // Stray cat reports — rate limit 3 per IP per 24h
+  // Stray cat reports — rate limit 3 per IP per 24h (skip for localhost)
   const strayReports = new Map<string, { count: number; resetAt: number }>();
 
   app.post("/api/report-stray", (req, res) => {
     const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const isLocal = ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
     const now = Date.now();
-    const entry = strayReports.get(ip);
-    if (entry && entry.resetAt > now && entry.count >= 3) {
-      res.status(429).json({ message: "Too many reports. Max 3 per day." });
-      return;
-    }
-    if (!entry || entry.resetAt <= now) {
-      strayReports.set(ip, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
-    } else {
-      entry.count++;
+
+    if (!isLocal) {
+      const entry = strayReports.get(ip);
+      if (entry && entry.resetAt > now && entry.count >= 3) {
+        res.status(429).json({ message: "Too many reports. Max 3 per day. Try again tomorrow." });
+        return;
+      }
+      if (!entry || entry.resetAt <= now) {
+        strayReports.set(ip, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
+      } else {
+        entry.count++;
+      }
     }
 
     const { description, image_url, latitude, longitude, city } = req.body;
-    if (!latitude || !longitude) {
-      res.status(400).json({ message: "Location is required" });
+    if (!latitude && !city) {
+      res.status(400).json({ message: "Location or city is required" });
       return;
     }
 
@@ -349,10 +356,7 @@ export function createApp(dbPath?: string) {
     } catch (err) { next(err); }
   });
 
-  // POST endpoints need body parser
-  app.use(express.json());
-
-  // Submit a shelter suggestion (public, no auth)
+  // Suggest shelter (public)
   app.post("/api/suggest-shelter", (req, res) => {
     const { name, city, voivodeship, website_url, submitter_email } = req.body;
     if (!name || !city) {

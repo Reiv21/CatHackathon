@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useI18n } from "../i18n";
 
 export function ReportStray() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [form, setForm] = useState({ description: "", image_url: "", latitude: "", longitude: "", city: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [locating, setLocating] = useState(false);
@@ -20,13 +20,21 @@ export function ReportStray() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.latitude || !form.longitude) { alert("Location required"); return; }
+    if (!form.latitude && !form.city) {
+      alert(lang === "pl" ? "Podaj lokalizację lub miasto" : "Provide location or city");
+      return;
+    }
     setStatus("sending");
     try {
+      const body = {
+        ...form,
+        latitude: form.latitude || "0",
+        longitude: form.longitude || "0",
+      };
       const res = await fetch("/api/report-stray", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -65,6 +73,11 @@ export function ReportStray() {
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayImageUrl}</label>
           <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })}
             placeholder="https://..." className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+          <p className="text-xs text-gray-400 mt-1">
+            {lang === "pl"
+              ? "Wrzuć zdjęcie na imgur.com lub postimg.cc i wklej link. Nie przechowujemy zdjęć."
+              : "Upload your photo to imgur.com or postimg.cc and paste the link. We don't store images."}
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">{t.strayLocation} *</label>
@@ -82,7 +95,7 @@ export function ReportStray() {
             className="w-full border border-cat-sand rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
         </div>
 
-        <button type="submit" disabled={status === "sending" || !form.latitude}
+        <button type="submit" disabled={status === "sending"}
           className="bg-primary-600 text-white rounded-xl px-6 py-3 font-semibold hover:bg-primary-700 disabled:opacity-50">
           {status === "sending" ? t.reportSending : t.reportSubmit}
         </button>

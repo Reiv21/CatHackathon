@@ -27,9 +27,16 @@ export function CatSearch() {
   const [voivodeship, setVoivodeship] = useState("");
   const [sex, setSex] = useState("");
   const [sort, setSort] = useState("");
+  const [showStrays, setShowStrays] = useState(false);
+  const [strays, setStrays] = useState<Array<{id: number; description: string; image_url: string | null; city: string; reported_at: string}>>([]);
   const { data: cats, loading, error, pagination, setPage } = useSearchCats(query, voivodeship, sex, sort);
   const { t, lang } = useI18n();
   const [randomCat, setRandomCat] = useState<CatResponse | null>(null);
+
+  // Fetch strays when toggled
+  if (showStrays && strays.length === 0) {
+    fetch("/api/strays").then(r => r.json()).then(setStrays).catch(() => {});
+  }
 
   const surprise = async () => {
     const cat = await apiFetch<CatResponse | null>("/api/random-cat");
@@ -106,6 +113,12 @@ export function CatSearch() {
             ? "⚠️ Nie wszystkie dane mogą być kompletne — informacje są zbierane automatycznie ze stron schronisk."
             : "⚠️ Not all data may be complete — information is collected automatically from shelter websites."}
         </p>
+
+        {/* Stray toggle */}
+        <button onClick={() => setShowStrays(!showStrays)}
+          className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors ${showStrays ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+          🐱 {showStrays ? t.hideStrays : t.showStrays}
+        </button>
       </div>
 
       {/* Loading / Error */}
@@ -130,6 +143,22 @@ export function CatSearch() {
           <div className="text-5xl mb-4">😿</div>
           <p className="text-gray-500">{t.noCats}</p>
           <p className="text-sm text-gray-400 mt-1">{t.noCatsHint}</p>
+        </div>
+      )}
+
+      {/* Stray reports */}
+      {showStrays && strays.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-red-600 mb-3">🐱 {t.strayReported} ({strays.length})</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {strays.map((s) => (
+              <div key={s.id} className="bg-white rounded-xl border border-red-200 p-4 shadow-sm">
+                {s.image_url && <img src={s.image_url} alt="stray" className="w-full h-32 object-cover rounded-lg mb-2" />}
+                <p className="text-sm text-gray-700">{s.description || (lang === "pl" ? "Brak opisu" : "No description")}</p>
+                <p className="text-xs text-gray-400 mt-1">📍 {s.city} • {new Date(s.reported_at).toLocaleDateString()}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
