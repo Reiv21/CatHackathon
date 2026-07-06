@@ -2,6 +2,8 @@
 
 **Cat adoption portal for the "World Cat Domination Day" (Światowy Dzień Kociej Dominacji) hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with gamified domination tracking.
 
+🌐 **Live:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
+
 ---
 
 ## Architecture Overview
