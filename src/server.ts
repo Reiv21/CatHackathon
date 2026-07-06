@@ -138,6 +138,7 @@ export function requireAdminAuth(
 
 export function createApp(dbPath?: string) {
   const app = express();
+  app.set("trust proxy", 1);
 
   // Security headers
   app.use(
