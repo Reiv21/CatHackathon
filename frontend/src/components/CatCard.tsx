@@ -60,7 +60,14 @@ export function CatCard({ cat }: CatCardProps) {
           )}
           {cat.age && (
             <span className="text-xs bg-warm-50 text-warm-700 px-2 py-1 rounded-full">
-              {lang === "pl" ? `ur. ${cat.age}` : `age: ${cat.age.replace(" lat", " yrs").replace(" mies", " mo")}`}
+              {(() => {
+                const num = parseInt(cat.age);
+                if (!isNaN(num) && num > 100) {
+                  // It's a birth year (e.g. "2014") — show as born year
+                  return lang === "pl" ? `ur. ${num}` : `born ${num}`;
+                }
+                return lang === "pl" ? `wiek: ${cat.age}` : `age: ${cat.age.replace(" lat", " yrs").replace(" mies", " mo")}`;
+              })()}
             </span>
           )}
         </div>
