@@ -16,7 +16,7 @@ interface Stats {
 }
 
 export function Home({ onNavigate }: HomeProps) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
