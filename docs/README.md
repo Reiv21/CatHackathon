@@ -33,7 +33,7 @@ Mrucznik automatically collects cat adoption listings from shelter websites usin
 - **Search & Filter** — find cats by name, city, region, or sex
 - **Interactive Map** — see all shelters on a map, find the nearest one to you
 - **Stray Cat Reporting** — community feature to report homeless cats with GPS location
-- **Gamification** — "Cat Domination" tracker showing how much of Poland's shelter network is covered
+- **Lost Cat Finder** — report missing cats so the community can help locate them
 - **Adoption Guides** — practical guides for first-time cat adopters (in Polish and English)
 
 ### Why This Matters

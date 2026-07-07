@@ -1,6 +1,6 @@
 # Mrucznik 🐱
 
-**Cat adoption portal for the "World Cat Domination Day" (Światowy Dzień Kociej Dominacji) hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with gamified domination tracking and a lost cat finder.
+**Cat adoption and rescue platform for the "For the Cats" hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with a lost cat finder and stray cat reporting.
 
 🌐 **Live:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
 
@@ -22,7 +22,7 @@ graph LR
 2. **Temporal.io** orchestrates the scraping pipeline — parent workflow spawns child workflows per shelter with retry and exponential backoff
 3. **SQLite** (better-sqlite3 in WAL mode) stores shelters and cats with foreign key relationships
 4. **Express.js** serves REST API endpoints reading directly from SQLite via persistent connection, secured with Helmet and CORS
-5. **React/Vite** frontend displays interactive map, cat search, domination tracker, and lost cat finder
+5. **React/Vite** frontend displays interactive map, cat search, lost cat finder, and stray cat reports
 
 ---
 

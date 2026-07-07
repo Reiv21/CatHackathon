@@ -148,8 +148,6 @@ CatHackathon/
 │   ├── worker.ts           # Temporal worker process
 │   ├── db.ts               # SQLite database schema and queries
 │   ├── validation.ts       # Input sanitization utilities
-│   ├── achievements.ts     # Achievement badge computation
-│   ├── domination.ts       # Domination level calculation
 │   ├── geocoding.ts        # City → GPS coordinate mapping
 │   └── *.test.ts           # Backend tests
 │

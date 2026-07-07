@@ -148,5 +148,4 @@ curl -X POST https://mrucznik.serwerigora.com/api/admin/sync \
 | `npm run client` | Trigger a sync workflow |
 | `npm test` | Run backend tests |
 | `npm run scrape` | Full scrape pipeline |
-| `npm run export-data` | Export SQLite → JSON manually |
 | `npm run validate` | Validate scraped data |
