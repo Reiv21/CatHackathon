@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import L from "leaflet";
 import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
-import { MarkerCluster } from "./MarkerCluster";
+import { ShelterPin } from "./ShelterPin";
 import { CatCard } from "./CatCard";
 import { NearestShelter } from "./NearestShelter";
 import { UserLocation } from "./UserLocation";
@@ -10,6 +11,17 @@ import { MapPersist } from "./MapPersist";
 import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default marker icons for retina displays
+L.Icon.Default.mergeOptions({
+  iconUrl: "/marker-icon.png",
+  iconRetinaUrl: "/marker-icon-2x.png",
+  shadowUrl: "/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export function MapView() {
   const { t, lang } = useI18n();
@@ -88,9 +100,9 @@ export function MapView() {
               </Popup>
             </CircleMarker>
           ))}
-          {shelters && (
-            <MarkerCluster shelters={shelters} onSelect={setSelectedShelter} lang={lang} />
-          )}
+          {shelters?.map((shelter) => (
+            <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
+          ))}
         </MapContainer>
       </div>
 
