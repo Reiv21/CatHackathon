@@ -120,9 +120,9 @@ export function MapView() {
         {showStrays && strays.length > 0 && (
           <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
             {strays.map((s) => (
-              <div key={s.id} className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs">
-                <p className="font-medium">{s.city || "?"} • {new Date(s.reported_at).toLocaleDateString()}</p>
-                {s.description && <p className="text-gray-600 truncate">{s.description}</p>}
+              <div key={s.id} className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-2 text-xs">
+                <p className="font-medium text-gray-900 dark:text-gray-100">{s.city || "?"} • {new Date(s.reported_at).toLocaleDateString()}</p>
+                {s.description && <p className="text-gray-600 dark:text-gray-400 truncate">{s.description}</p>}
               </div>
             ))}
           </div>

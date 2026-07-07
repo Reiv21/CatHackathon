@@ -4,6 +4,8 @@
 
 🌐 **Live:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
 
+📄 **Project Report:** [docs/PROJECT_REPORT.md](./docs/PROJECT_REPORT.md)
+
 ---
 
 ## Architecture Overview
