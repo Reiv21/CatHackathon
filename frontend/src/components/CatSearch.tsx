@@ -35,6 +35,8 @@ export function CatSearch() {
   const { data: cats, loading, error, pagination, setPage, retry } = useSearchCats(query, voivodeship, sex, sort);
   const { t, lang } = useI18n();
   const [randomCat, setRandomCat] = useState<CatResponse | null>(null);
+  const [surpriseLoading, setSurpriseLoading] = useState(false);
+  const [surpriseLightbox, setSurpriseLightbox] = useState(false);
 
   // Fetch strays when toggled
   if (showStrays && strays.length === 0) {
@@ -42,12 +44,24 @@ export function CatSearch() {
   }
 
   const surprise = async () => {
+    setSurpriseLoading(true);
+    setRandomCat(null);
     const cat = await apiFetch<CatResponse | null>("/api/random-cat");
+    // Small delay for animation effect
+    await new Promise((r) => setTimeout(r, 500));
     setRandomCat(cat);
+    setSurpriseLoading(false);
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Surprise cat lightbox */}
+      {surpriseLightbox && randomCat?.image_url && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setSurpriseLightbox(false)} role="dialog" aria-label={`${randomCat.name} – ${randomCat.shelter_city}`}>
+          <img src={randomCat.image_url} alt={`${randomCat.name} – ${randomCat.shelter_city}`} className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
+
       <div className="text-center mb-6">
         <h1 className="text-3xl font-display font-bold mb-2">{t.searchTitle}</h1>
         <p className="text-gray-500">{t.searchSubtitle}</p>
@@ -55,15 +69,15 @@ export function CatSearch() {
 
       {/* Surprise me */}
       <div className="text-center mb-6">
-        <button onClick={surprise} className="px-4 py-2 bg-warm-100 text-warm-700 rounded-full text-sm font-medium hover:bg-warm-200 transition-colors">
-          🎲 {lang === "pl" ? "Zaskocz mnie!" : "Surprise me!"}
+        <button onClick={surprise} disabled={surpriseLoading} className="px-4 py-2 bg-warm-100 text-warm-700 rounded-full text-sm font-medium hover:bg-warm-200 transition-colors disabled:opacity-70">
+          {surpriseLoading ? <span className="inline-block animate-bounce">🐱</span> : "🎲"} {lang === "pl" ? "Zaskocz mnie!" : "Surprise me!"}
         </button>
       </div>
 
       {/* Random cat modal */}
       {randomCat && (
         <div className="max-w-sm mx-auto mb-8 bg-white rounded-2xl shadow-lg overflow-hidden border border-primary-200">
-          {randomCat.image_url && <img src={randomCat.image_url} alt={`${randomCat.name} – ${randomCat.shelter_city}`} className="w-full h-48 object-cover" />}
+          {randomCat.image_url && <img src={randomCat.image_url} alt={`${randomCat.name} – ${randomCat.shelter_city}`} className="w-full h-48 object-cover cursor-pointer" onClick={() => setSurpriseLightbox(true)} />}
           <div className="p-4">
             <h3 className="font-display font-bold text-lg">{randomCat.name}</h3>
             <p className="text-xs text-gray-500">📍 {randomCat.shelter_city}</p>

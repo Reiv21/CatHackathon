@@ -1,6 +1,6 @@
 # Mrucznik 🐱
 
-**Cat adoption portal for the "World Cat Domination Day" (Światowy Dzień Kociej Dominacji) hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with gamified domination tracking.
+**Cat adoption portal for the "World Cat Domination Day" (Światowy Dzień Kociej Dominacji) hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with gamified domination tracking and a lost cat finder.
 
 🌐 **Live:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
 
@@ -12,9 +12,8 @@
 graph LR
     A[Cheerio<br/>Scraping] --> B[Temporal.io<br/>Orchestration]
     B --> C[SQLite / better-sqlite3<br/>Storage]
-    C --> D[JSON Export<br/>data/]
-    D --> E[Express.js<br/>API Server]
-    E --> F[React / Vite<br/>Frontend]
+    C --> D[Express.js<br/>API Server]
+    D --> E[React / Vite<br/>Frontend]
 ```
 
 ### Data Flow
@@ -22,9 +21,8 @@ graph LR
 1. **Cheerio** scrapes cat listings from 40+ shelter websites using config-driven CSS selectors
 2. **Temporal.io** orchestrates the scraping pipeline — parent workflow spawns child workflows per shelter with retry and exponential backoff
 3. **SQLite** (better-sqlite3 in WAL mode) stores shelters and cats with foreign key relationships
-4. **JSON Export** activity atomically writes `data/shelters.json` and `data/cats.json` after sync completes
-5. **Express.js** serves REST API endpoints reading from the exported JSON files, secured with Helmet and CORS
-6. **React/Vite** frontend displays interactive map, cat search, domination tracker, and achievement badges
+4. **Express.js** serves REST API endpoints reading directly from SQLite via persistent connection, secured with Helmet and CORS
+5. **React/Vite** frontend displays interactive map, cat search, domination tracker, and lost cat finder
 
 ---
 
@@ -131,7 +129,7 @@ Key measures applied:
 |------------|---------|
 | [Cheerio](https://cheerio.js.org/) | HTML parsing and CSS-selector-based cat data extraction |
 | [Temporal.io](https://temporal.io/) | Workflow orchestration with retries and observability |
-| [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Embedded SQLite database in WAL mode for structured storage |
+| [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Embedded SQLite database — persistent WAL-mode connection for all API reads |
 
 ### API Server
 
@@ -180,7 +178,6 @@ Key measures applied:
 | `npm run scrape` | Full scrape pipeline (all shelters + validate) |
 | `npm run build` | Compile backend TypeScript |
 | `npm test` | Run backend tests (Vitest) |
-| `npm run export-data` | Export SQLite data to JSON manually |
 | `cd frontend && npm run dev` | Frontend dev server (port 5173) |
 | `cd frontend && npm run build` | Production frontend build |
 

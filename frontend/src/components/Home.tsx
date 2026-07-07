@@ -25,6 +25,7 @@ export function Home({ onNavigate }: HomeProps) {
   const [catOfDay, setCatOfDay] = useState<CatResponse | null>(null);
   const [catOfDayLoading, setCatOfDayLoading] = useState(true);
   const [catOfDayError, setCatOfDayError] = useState<string | null>(null);
+  const [catOfDayLightbox, setCatOfDayLightbox] = useState(false);
 
   const fetchStats = useCallback(() => {
     setStatsLoading(true);
@@ -49,6 +50,12 @@ export function Home({ onNavigate }: HomeProps) {
 
   return (
     <div>
+      {/* Cat of Day Lightbox — rendered at top level for correct z-index */}
+      {catOfDayLightbox && catOfDay?.image_url && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setCatOfDayLightbox(false)} role="dialog" aria-label={`${catOfDay.name} – ${catOfDay.shelter_city}`}>
+          <img src={catOfDay.image_url} alt={`${catOfDay.name} – ${catOfDay.shelter_city}`} className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
 
       {/* Hero */}
       <section className="py-16 px-4">
@@ -88,7 +95,7 @@ export function Home({ onNavigate }: HomeProps) {
           <div className="max-w-lg mx-auto">
             <h2 className="text-xl font-display font-bold text-center mb-6">{t.catOfDay}</h2>
             <div className="relative rounded-2xl overflow-hidden shadow-lg">
-              <img src={catOfDay.image_url} alt={`${catOfDay.name} – ${catOfDay.shelter_city}`} className="w-full h-80 object-cover" />
+              <img src={catOfDay.image_url} alt={`${catOfDay.name} – ${catOfDay.shelter_city}`} className="w-full h-80 object-cover cursor-pointer" onClick={() => setCatOfDayLightbox(true)} />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h3 className="text-2xl font-display font-bold text-white">{catOfDay.name}</h3>
                 <p className="text-sm text-white/80 mt-1">📍 {catOfDay.shelter_city}</p>

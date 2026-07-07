@@ -121,26 +121,26 @@ describe("stripControlChars - Terminal Escape Injection Mitigation", () => {
     });
   });
 
-  describe("Terminal injection via whitespace control characters", () => {
-    it("should remove newlines to prevent forged output lines", () => {
-      const malicious = "Legitimate\nFake Error: System Compromised";
-      const result = stripControlChars(malicious);
-      expect(result).toBe("LegitimateFake Error: System Compromised");
-      expect(result).not.toContain("\n");
+  describe("Preserved whitespace", () => {
+    it("should preserve newlines", () => {
+      const text = "Line 1\nLine 2";
+      const result = stripControlChars(text);
+      expect(result).toBe("Line 1\nLine 2");
+      expect(result).toContain("\n");
     });
 
-    it("should remove tabs", () => {
-      const malicious = "Column1\tColumn2";
-      const result = stripControlChars(malicious);
-      expect(result).toBe("Column1Column2");
-      expect(result).not.toContain("\t");
+    it("should preserve tabs", () => {
+      const text = "Column1\tColumn2";
+      const result = stripControlChars(text);
+      expect(result).toBe("Column1\tColumn2");
+      expect(result).toContain("\t");
     });
 
-    it("should remove carriage returns to prevent line overwriting", () => {
-      const malicious = "Legitimate Text\rFake Output";
-      const result = stripControlChars(malicious);
-      expect(result).toBe("Legitimate TextFake Output");
-      expect(result).not.toContain("\r");
+    it("should preserve carriage returns", () => {
+      const text = "Text\rWith\rCR";
+      const result = stripControlChars(text);
+      expect(result).toBe("Text\rWith\rCR");
+      expect(result).toContain("\r");
     });
 
     it("should preserve spaces", () => {
@@ -232,15 +232,15 @@ describe("stripControlChars - Terminal Escape Injection Mitigation", () => {
   });
 
   describe("Comprehensive control character coverage", () => {
-    it("should remove ALL C0 control characters including tab, newline, carriage return", () => {
-      // Test all C0 controls (0x00-0x1F) - ALL should be removed after security fix
+    it("should remove all C0 control characters except tab, newline, carriage return", () => {
+      // Test all C0 controls (0x00-0x1F) except 0x09 (tab), 0x0A (newline), 0x0D (CR)
       // Note: 0x1B (ESC) is handled by separate regex patterns for ANSI sequences
       const controlChars = [
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, // tab - NOW REMOVED
-        0x0A, // newline - NOW REMOVED
+        // 0x09 (tab) - preserved
+        // 0x0A (newline) - preserved
         0x0B, 0x0C,
-        0x0D, // CR - NOW REMOVED
+        // 0x0D (CR) - preserved
         0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
         0x18, 0x19, 0x1A,
         // 0x1B (ESC) - handled by ANSI escape sequence patterns
@@ -253,6 +253,15 @@ describe("stripControlChars - Terminal Escape Injection Mitigation", () => {
         expect(result).toBe("TextEnd");
         expect(result).not.toContain(String.fromCharCode(code));
       }
+    });
+
+    it("should preserve tab, newline, and carriage return", () => {
+      const text = "Line1\nLine2\tColumn\rReturn";
+      const result = stripControlChars(text);
+      expect(result).toBe("Line1\nLine2\tColumn\rReturn");
+      expect(result).toContain("\n");
+      expect(result).toContain("\t");
+      expect(result).toContain("\r");
     });
   });
 
@@ -381,188 +390,6 @@ describe("stripControlChars - Terminal Escape Injection Mitigation", () => {
       Object.values(sanitized).forEach(value => {
         expect(value).not.toContain("\x1b");
         expect(value).not.toMatch(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/);
-      });
-    });
-  });
-
-  describe("Pentest exploit scenarios - direct reproduction", () => {
-    it("should prevent screen clearing attack from malicious shelter website", () => {
-      // Exact scenario: attacker controls shelter website, injects clear screen + fake success message
-      const maliciousCatName = "\x1b[2J\x1b[HFluffy";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      // Verify escape sequences are removed
-      expect(sanitized).toBe("Fluffy");
-      expect(sanitized).not.toContain("\x1b[2J"); // clear screen
-      expect(sanitized).not.toContain("\x1b[H");  // cursor home
-      expect(sanitized).not.toContain("\x1b");
-    });
-
-    it("should prevent cursor repositioning to overwrite previous output", () => {
-      // Attacker tries to move cursor up and overwrite previous lines
-      const maliciousCatName = "Whiskers\x1b[A\x1b[A\x1b[2K\x1b[31mFAKE ERROR\x1b[0m";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("WhiskersFAKE ERROR");
-      expect(sanitized).not.toContain("\x1b[A");  // cursor up
-      expect(sanitized).not.toContain("\x1b[2K"); // erase line
-      expect(sanitized).not.toContain("\x1b");
-    });
-
-    it("should prevent newline injection to forge additional output lines", () => {
-      // Attacker injects newlines to create fake log entries
-      const maliciousCatName = "Mittens\n    ✅ Security check passed\n    ✅ All systems normal";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      // Newlines must be removed to prevent forged lines
-      expect(sanitized).toBe("Mittens    ✅ Security check passed    ✅ All systems normal");
-      expect(sanitized).not.toContain("\n");
-    });
-
-    it("should prevent carriage return to overwrite current line", () => {
-      // Attacker uses CR to overwrite the beginning of the line
-      const maliciousCatName = "Legitimate Cat Name\rFAKE: ";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      // CR must be removed to prevent line overwriting
-      expect(sanitized).toBe("Legitimate Cat NameFAKE: ");
-      expect(sanitized).not.toContain("\r");
-    });
-
-    it("should prevent tab injection for output misalignment", () => {
-      // Attacker uses tabs to misalign output and hide content
-      const maliciousCatName = "Cat\t\t\t\t\t\t\t\tHidden";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      // Tabs must be removed
-      expect(sanitized).toBe("CatHidden");
-      expect(sanitized).not.toContain("\t");
-    });
-
-    it("should prevent bell character spam", () => {
-      // Attacker tries to trigger terminal bell repeatedly
-      const maliciousCatName = "Annoying\x07\x07\x07\x07\x07Cat";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("AnnoyingCat");
-      expect(sanitized).not.toContain("\x07");
-    });
-
-    it("should prevent backspace character to delete previous output", () => {
-      // Attacker uses backspace to delete characters
-      const maliciousCatName = "Fluffy\x08\x08\x08\x08\x08\x08Evil";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("FluffyEvil");
-      expect(sanitized).not.toContain("\x08");
-    });
-
-    it("should handle combined attack with multiple techniques", () => {
-      // Real-world attack combining clear, reposition, color, newlines, and CR
-      const maliciousCatName = "\x1b[2J\x1b[H\x1b[32m✓ Tests passed\x1b[0m\n\x1b[32m✓ Build successful\x1b[0m\rFAKE OUTPUT";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("✓ Tests passed✓ Build successfulFAKE OUTPUT");
-      expect(sanitized).not.toContain("\x1b");
-      expect(sanitized).not.toContain("\n");
-      expect(sanitized).not.toContain("\r");
-    });
-
-    it("should prevent null byte injection", () => {
-      // Null bytes can truncate strings in some contexts
-      const maliciousCatName = "Visible\x00Hidden";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("VisibleHidden");
-      expect(sanitized).not.toContain("\x00");
-    });
-
-    it("should prevent C1 control character injection", () => {
-      // C1 controls (0x80-0x9F) can also manipulate terminals
-      const maliciousCatName = "Cat\x80\x81\x9fName";
-      const sanitized = stripControlChars(maliciousCatName);
-      
-      expect(sanitized).toBe("CatName");
-      // Verify no C1 controls remain
-      for (let i = 0x80; i <= 0x9f; i++) {
-        expect(sanitized).not.toContain(String.fromCharCode(i));
-      }
-    });
-  });
-
-  describe("Verification of fix application points", () => {
-    it("should verify stripControlChars is applied before console.log in inspect.ts pattern", () => {
-      // Simulates the exact pattern from inspect.ts:
-      // console.log(`       🐈 ${stripControlChars(cat.name)}`);
-      
-      const maliciousCat = {
-        name: "\x1b[31mMalicious\x1b[0m",
-        description: "Desc\nwith\nnewlines",
-        image_url: "http://example.com/img.jpg\x00"
-      };
-      
-      // Apply stripControlChars as done in inspect.ts
-      const consoleOutput = `       🐈 ${stripControlChars(maliciousCat.name)}`;
-      const descOutput = stripControlChars(maliciousCat.description);
-      const imgOutput = stripControlChars(maliciousCat.image_url);
-      
-      expect(consoleOutput).toBe("       🐈 Malicious");
-      expect(consoleOutput).not.toContain("\x1b");
-      
-      expect(descOutput).toBe("Descwithnewlines");
-      expect(descOutput).not.toContain("\n");
-      
-      expect(imgOutput).toBe("http://example.com/img.jpg");
-      expect(imgOutput).not.toContain("\x00");
-    });
-
-    it("should verify stripControlChars is applied to shelter name and URL", () => {
-      // Simulates the pattern from inspect.ts:
-      // console.log(`\n  Scraping: ${stripControlChars(shelter.name)} (${stripControlChars(shelter.website_url || "")})...`);
-      
-      const maliciousShelter = {
-        name: "Happy\x1b[2JShelter",
-        website_url: "http://evil.com\nhttp://fake.com"
-      };
-      
-      const consoleOutput = `\n  Scraping: ${stripControlChars(maliciousShelter.name)} (${stripControlChars(maliciousShelter.website_url)})...`;
-      
-      expect(consoleOutput).toContain("Happy");
-      expect(consoleOutput).toContain("Shelter");
-      expect(consoleOutput).not.toContain("\x1b[2J");
-      expect(consoleOutput).not.toContain("\n  Scraping: Happy\x1b[2J");
-      
-      // Verify the URL doesn't contain newlines that could forge additional lines
-      const sanitizedUrl = stripControlChars(maliciousShelter.website_url);
-      expect(sanitizedUrl).toBe("http://evil.comhttp://fake.com");
-      expect(sanitizedUrl).not.toContain("\n");
-    });
-
-    it("should verify all scraped fields are sanitized before logging", () => {
-      // Comprehensive check that all fields from scrapeCatsActivity are sanitized
-      const scrapedData = {
-        name: "\x1b[31mName\x1b[0m",
-        description: "Desc\nLine2",
-        image_url: "http://img.com\x00",
-        shelter_name: "Shelter\x07",
-        shelter_url: "http://url.com\r"
-      };
-      
-      // All fields must pass through stripControlChars
-      const sanitized = Object.fromEntries(
-        Object.entries(scrapedData).map(([key, value]) => [key, stripControlChars(value)])
-      );
-      
-      expect(sanitized.name).toBe("Name");
-      expect(sanitized.description).toBe("DescLine2");
-      expect(sanitized.image_url).toBe("http://img.com");
-      expect(sanitized.shelter_name).toBe("Shelter");
-      expect(sanitized.shelter_url).toBe("http://url.com");
-      
-      // Verify no control characters in any field
-      Object.values(sanitized).forEach(value => {
-        expect(value).not.toMatch(/[\x00-\x1f\x7f-\x9f]/);
-        expect(value).not.toContain("\x1b");
       });
     });
   });

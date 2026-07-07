@@ -120,6 +120,24 @@ export function initializeDatabase(dbPath?: string): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_suggestions_city ON suggestions(city);
   `);
 
+  // Create lost_cats table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS lost_cats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      image_url TEXT,
+      latitude REAL NOT NULL DEFAULT 0,
+      longitude REAL NOT NULL DEFAULT 0,
+      city TEXT NOT NULL DEFAULT '',
+      contact_info TEXT,
+      reported_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_lost_cats_city ON lost_cats(city);
+  `);
+
   return db;
 }
 

@@ -64,23 +64,20 @@ If GPS is not provided, the system geocodes the city name to approximate coordin
 
 ---
 
-## 🏆 Gamification — Cat Domination Tracker
+## 🔍 Lost Cat Finder
 
-### Domination Levels
-The app tracks how many of Poland's ~190 shelters are covered in the database and assigns a "domination level":
+### Report a Lost Cat
+If your cat has gone missing, you can file a report to alert the community. The form collects:
+- **Cat name** (required)
+- **Description** — color, markings, breed, temperament
+- **Last seen location** — city and street or area
+- **Contact info** — phone or email so finders can reach you
 
-| Coverage | Level (Polish) | Translation |
-|----------|---------------|-------------|
-| 0–25% | Kocie Zwiadowcy | Cat Scouts |
-| 25–50% | Kocia Partyzantka | Cat Guerrillas |
-| 50–75% | Kocia Ofensywa | Cat Offensive |
-| 75–100% | Pełna Kocia Dominacja | Total Cat Domination |
+### Lost Cats on the Map
+Reported lost cats appear on the interactive map as **yellow pins**, making it easy for people in the area to keep an eye out. Click a pin to see the cat's description and contact details.
 
-### Achievement Badges
-Unlock achievements as the platform grows:
-- 🎯 **Pierwsza Setka** — 100 cats in the database
-- 🏠 **10 Schronisk** — 10 shelters with cats listed
-- 🇵🇱 **Pełna Dominacja** — cats from all 16 voivodeships
+### Reuniting Cats with Owners
+When someone spots a lost cat, they can use the contact info on the report to reach out directly. Found your cat? The report can be removed via the admin panel.
 
 ---
 
@@ -164,7 +161,7 @@ The most technically interesting feature. Here's how data stays fresh:
 3. **Child workflows** spawn — one per shelter, each scraping cat listings from that shelter's website
 4. If a shelter's site is down or slow, Temporal **automatically retries** (up to 3 times with exponential backoff)
 5. If one shelter fails, the others continue unaffected (fault isolation)
-6. After all scrapers finish, data is **atomically exported** to JSON files
-7. The Express API serves the fresh data immediately
+6. After all scrapers finish, data is **immediately available** to the Express API via the shared SQLite database
+7. The Express API serves the fresh data on the next request
 
 This architecture ensures the system is **reliable** even when individual shelter websites are unreliable (which they often are).

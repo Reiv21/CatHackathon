@@ -26,6 +26,8 @@ export function MapView() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showStrays, setShowStrays] = useState(false);
   const [strays, setStrays] = useState<Array<{ id: number; latitude: number; longitude: number; description: string; city: string; reported_at: string; image_url: string | null }>>([]);
+  const [showLostCats, setShowLostCats] = useState(false);
+  const [lostCats, setLostCats] = useState<Array<{ id: number; name: string; latitude: number; longitude: number; description: string; city: string; reported_at: string; image_url: string | null }>>([]);
   const { data: shelterCats, loading: catsLoading } = useShelterCats(
     selectedShelter?.id_zewnetrzne ?? null
   );
@@ -35,6 +37,12 @@ export function MapView() {
       fetch("/api/strays").then(r => r.json()).then(setStrays).catch(() => {});
     }
   }, [showStrays]);
+
+  useEffect(() => {
+    if (showLostCats) {
+      fetch("/api/lost-cats").then(r => r.json()).then(setLostCats).catch(() => {});
+    }
+  }, [showLostCats]);
 
   return (
     <div className="flex flex-col md:flex-row h-full">
@@ -75,6 +83,19 @@ export function MapView() {
               </Popup>
             </CircleMarker>
           ))}
+          {showLostCats && lostCats.filter(c => c.latitude && c.longitude && !(c.latitude === 0 && c.longitude === 0)).map((c) => (
+            <CircleMarker key={`lost-${c.id}`} center={[c.latitude, c.longitude]} radius={8}
+              pathOptions={{ color: "#eab308", fillColor: "#eab308", fillOpacity: 0.7 }}>
+              <Popup>
+                <div className="text-sm max-w-[200px]">
+                  {c.image_url && <img src={c.image_url} alt="" className="w-full h-24 object-cover rounded mb-2" />}
+                  <p className="font-bold">{c.name || t.lostCatReported}</p>
+                  <p className="text-gray-600">{c.description || c.city}</p>
+                  <p className="text-xs text-gray-500">{new Date(c.reported_at).toLocaleDateString()}</p>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
           {shelters?.map((shelter) => (
             <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
           ))}
@@ -94,8 +115,14 @@ export function MapView() {
         )}
         {/* Stray toggle */}
         <button onClick={() => setShowStrays(!showStrays)}
-          className={`w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${showStrays ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+          className={`w-full mb-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${showStrays ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
           🐱 {showStrays ? t.hideStrays : t.showStrays}
+        </button>
+
+        {/* Lost cats toggle */}
+        <button onClick={() => setShowLostCats(!showLostCats)}
+          className={`w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${showLostCats ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"}`}>
+          🔍 {showLostCats ? t.hideLostCats : t.showLostCats}
         </button>
 
         {showStrays && strays.length > 0 && (

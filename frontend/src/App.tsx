@@ -7,13 +7,14 @@ import { SuggestShelter } from "./components/SuggestShelter";
 import { Admin } from "./components/Admin";
 import { Volunteer } from "./components/Volunteer";
 import { ReportStray } from "./components/ReportStray";
+import { LostCat } from "./components/LostCat";
 import { useI18n } from "./i18n";
 
-type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer" | "report-stray";
+type Page = "home" | "search" | "map" | "guides" | "suggest" | "admin" | "volunteer" | "report-stray" | "lost-cat";
 
 function getPageFromHash(): Page {
   const hash = window.location.hash.replace("#", "") || "home";
-  const valid: Page[] = ["home", "search", "map", "guides", "suggest", "admin", "volunteer", "report-stray"];
+  const valid: Page[] = ["home", "search", "map", "guides", "suggest", "admin", "volunteer", "report-stray", "lost-cat"];
   return valid.includes(hash as Page) ? (hash as Page) : "home";
 }
 
@@ -22,6 +23,21 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useI18n();
   const mainRef = useRef<HTMLElement>(null);
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") return true;
+    if (saved === "light") return false;
+    return false; // default to light mode
+  });
+
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
 
   const setPage = (p: Page) => {
     setPageState(p);
@@ -90,12 +106,13 @@ export default function App() {
 
               {/* Zgłoś dropdown */}
               <div className="relative group">
-                <button className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${(page === "suggest" || page === "report-stray") ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
+                <button className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${(page === "suggest" || page === "report-stray" || page === "lost-cat") ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>
                   {lang === "pl" ? "Zgłoś" : "Report"} ▾
                 </button>
                 <div className="absolute left-0 top-full mt-1 bg-white border border-cat-sand rounded-xl shadow-lg py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   <button onClick={() => navigate("suggest")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.addShelter}</button>
                   <button onClick={() => navigate("report-stray")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.reportStray}</button>
+                  <button onClick={() => navigate("lost-cat")} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">{t.lostCat}</button>
                 </div>
               </div>
             </nav>
@@ -104,10 +121,20 @@ export default function App() {
               className="ml-2 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50">
               {lang === "en" ? "🇵🇱 PL" : "🇬🇧 EN"}
             </button>
+            <button onClick={() => setDark(!dark)}
+              aria-label={dark ? (lang === "pl" ? "Tryb jasny" : "Light mode") : (lang === "pl" ? "Tryb ciemny" : "Dark mode")}
+              className="ml-1 px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg hover:bg-gray-50">
+              {dark ? "☀️" : "🌙"}
+            </button>
           </div>
 
           {/* Mobile: lang + hamburger */}
           <div className="flex md:hidden items-center gap-2">
+            <button onClick={() => setDark(!dark)}
+              aria-label={dark ? (lang === "pl" ? "Tryb jasny" : "Light mode") : (lang === "pl" ? "Tryb ciemny" : "Dark mode")}
+              className="px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg">
+              {dark ? "☀️" : "🌙"}
+            </button>
             <button onClick={() => setLang(lang === "en" ? "pl" : "en")}
               aria-label={lang === "en" ? "Switch to Polish" : "Przełącz na angielski"}
               className="px-2 py-1 text-xs font-medium border border-cat-sand rounded-lg">
@@ -144,6 +171,7 @@ export default function App() {
               <p className="px-3 py-1 text-xs text-gray-400 uppercase tracking-wide">{lang === "pl" ? "Zgłoś" : "Report"}</p>
               <button onClick={() => navigate("suggest")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "suggest" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.addShelter}</button>
               <button onClick={() => navigate("report-stray")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "report-stray" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.reportStray}</button>
+              <button onClick={() => navigate("lost-cat")} className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${page === "lost-cat" ? "bg-primary-100 text-primary-700" : "text-gray-600 hover:bg-gray-100"}`}>{t.lostCat}</button>
             </div>
           </nav>
         )}
@@ -157,6 +185,7 @@ export default function App() {
         {page === "suggest" && <SuggestShelter />}
         {page === "volunteer" && <Volunteer />}
         {page === "report-stray" && <ReportStray />}
+        {page === "lost-cat" && <LostCat />}
         {page === "admin" && <Admin />}
       </main>
 

@@ -13,8 +13,8 @@ This document explains how the system is built, what technologies are used, and 
 │  │ Parent Workflow  │───▶│ Child Workflow (per shelter)       │    │
 │  │ - fetch shelters │    │ - scrape cats from website         │    │
 │  │ - spawn children │    │ - save to database                 │    │
-│  │ - export JSON    │    │ - retry on failure (3x, exp backoff│    │
-│  └─────────────────┘    └──────────────────────────────────┘     │
+│  └─────────────────┘    │ - retry on failure (3x, exp backoff│    │
+│                          └──────────────────────────────────┘     │
 └──────────────────────────────────────────────────────────────────┘
          │                              │
          ▼                              ▼
@@ -28,13 +28,6 @@ This document explains how the system is built, what technologies are used, and 
               ┌───────────────────┐
               │   SQLite Database  │
               │   (WAL mode)       │
-              └────────┬──────────┘
-                       │ export
-                       ▼
-              ┌───────────────────┐
-              │  JSON Files        │
-              │  data/cats.json    │
-              │  data/shelters.json│
               └────────┬──────────┘
                        │ read
                        ▼
@@ -114,7 +107,7 @@ Admin triggers sync → Temporal parent workflow starts
      → CSS selectors from scraper-config.json extract cat names, photos, descriptions
      → Saves results to SQLite
   → After all children complete:
-     → Export activity writes data/cats.json and data/shelters.json atomically
+     → Data is immediately available to API via SQLite
 ```
 
 ### 2. Serving Data
@@ -122,7 +115,7 @@ Admin triggers sync → Temporal parent workflow starts
 ```
 User opens mrucznik.serwerigora.com
   → Nginx terminates SSL, forwards to Express
-  → Express reads JSON files (fresh on every request)
+  → Express reads directly from SQLite (persistent WAL-mode connection)
   → Returns data with security headers (CSP, HSTS, etc.)
   → React frontend renders the UI
 ```
@@ -138,7 +131,7 @@ User searches for "Mruczek" in Kraków
 User reports a stray cat
   → Frontend sends POST /api/report-stray with description + GPS
   → Express validates, rate-checks, geocodes if needed
-  → Saves to data/strays.json
+  → Saves to SQLite database
   → Cat appears on the map for other users
 ```
 
@@ -168,12 +161,6 @@ CatHackathon/
 │   │   ├── i18n.tsx        # Internationalization (PL/EN)
 │   │   └── api.ts          # API client with timeout handling
 │   └── dist/               # Production build output
-│
-├── data/                   # Runtime data (JSON exports)
-│   ├── cats.json           # All cat listings
-│   ├── shelters.json       # All shelter information
-│   ├── strays.json         # Stray cat reports
-│   └── suggestions.json    # Community shelter suggestions
 │
 ├── scraper-config.json     # Per-shelter CSS selectors for scraping
 ├── shelter-sync.db         # SQLite database file
@@ -220,10 +207,10 @@ The entire application runs on a single **Raspberry Pi** — demonstrating that 
 | GET | /api/cat-of-the-day | Featured cat | No |
 | GET | /api/random-cat | Random cat | No |
 | GET | /api/strays | Stray cat reports | No |
-| GET | /api/domination | Domination progress stats | No |
-| GET | /api/achievements | Achievement badges | No |
+| GET | /api/lost-cats | Lost cat reports | No |
 | GET | /api/health | Server health check | No |
 | POST | /api/report-stray | Submit stray report | No (rate-limited) |
+| POST | /api/report-lost-cat | Report a lost cat | No (rate-limited) |
 | POST | /api/suggest-shelter | Suggest a shelter | No |
 | POST | /api/admin/login | Admin authentication | No |
 | POST | /api/admin/sync | Trigger Temporal sync | Bearer token |

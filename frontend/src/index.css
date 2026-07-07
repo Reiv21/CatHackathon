@@ -37,6 +37,102 @@
     z-index: 1;
   }
 
+  /* Dark mode */
+  html.dark body {
+    @apply bg-cat-charcoal text-gray-100;
+  }
+  .dark .bg-white {
+    @apply bg-gray-800 border-gray-700;
+  }
+  .dark .bg-cat-cream {
+    @apply bg-cat-charcoal;
+  }
+  .dark .text-cat-dark {
+    @apply text-gray-100;
+  }
+  .dark .text-cat-brown {
+    @apply text-gray-200;
+  }
+  .dark .text-gray-700 {
+    @apply text-gray-200;
+  }
+  .dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+  .dark .text-gray-500 {
+    @apply text-gray-400;
+  }
+  .dark .border-cat-sand {
+    @apply border-gray-700;
+  }
+  .dark .bg-gray-100 {
+    @apply bg-gray-700;
+  }
+  .dark .bg-gray-50 {
+    @apply bg-gray-800;
+  }
+  .dark .bg-warm-50 {
+    @apply bg-gray-800;
+  }
+  .dark .bg-warm-100 {
+    @apply bg-gray-700;
+  }
+  .dark .bg-primary-50 {
+    @apply bg-gray-700;
+  }
+  /* Fix shadow glow on buttons in dark mode */
+  .dark .shadow-lg {
+    --tw-shadow-color: transparent;
+  }
+  .dark .shadow-primary-200 {
+    --tw-shadow-color: transparent;
+  }
+  /* Form inputs in dark mode */
+  .dark input,
+  .dark select,
+  .dark textarea {
+    @apply bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400;
+  }
+  /* Active nav tab in dark mode */
+  .dark .bg-primary-100 {
+    @apply bg-primary-900;
+  }
+  .dark .text-primary-700 {
+    @apply text-primary-300;
+  }
+  /* Buttons that use bg-primary-100 or bg-red-100 etc in dark */
+  .dark .bg-red-100 {
+    @apply bg-red-900;
+  }
+  .dark .bg-yellow-100 {
+    @apply bg-yellow-900;
+  }
+  /* Hover state for nav items — prevent flash to white */
+  .dark .hover\:bg-gray-100:hover {
+    background-color: rgb(55 65 81) !important;
+  }
+  .dark .hover\:bg-gray-50:hover {
+    background-color: rgb(55 65 81) !important;
+  }
+  .dark .hover\:bg-warm-200:hover {
+    background-color: rgb(55 65 81) !important;
+  }
+  .dark .hover\:bg-cat-sand:hover {
+    background-color: rgb(55 65 81) !important;
+  }
+  /* Cards in dark mode — subtle border for visibility */
+  .dark .shadow-sm {
+    box-shadow: 0 0 0 1px rgb(55 65 81);
+  }
+  /* Guide cards and content sections */
+  .dark .bg-warm-50,
+  .dark .bg-cat-cream {
+    @apply bg-gray-800;
+  }
+  .dark .text-warm-700 {
+    @apply text-warm-300;
+  }
+
   /* Accessible focus indicator */
   *:focus-visible {
     outline: 2px solid #2563eb;

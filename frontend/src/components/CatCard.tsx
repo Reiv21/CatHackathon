@@ -16,6 +16,7 @@ export function truncateDescription(description: string | null): string {
 export function CatCard({ cat }: CatCardProps) {
   const { t, lang } = useI18n();
   const [lightbox, setLightbox] = useState(false);
+  const [toast, setToast] = useState(false);
   const description = truncateDescription(cat.description);
 
   return (
@@ -27,7 +28,7 @@ export function CatCard({ cat }: CatCardProps) {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-cat-sand group">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-cat-sand group">
         {/* Image */}
         <div className="w-full h-52 bg-gray-100 overflow-hidden cursor-pointer" onClick={() => cat.image_url && setLightbox(true)}>
           {cat.image_url ? (
@@ -95,12 +96,19 @@ export function CatCard({ cat }: CatCardProps) {
             onClick={() => {
               const url = cat.source_url || cat.shelter_url || window.location.href;
               navigator.clipboard.writeText(url);
+              setToast(true);
+              setTimeout(() => setToast(false), 2000);
             }}
-            className="text-xs text-gray-500 hover:text-gray-700"
+            className="text-xs text-gray-500 hover:text-gray-700 relative"
             aria-label={lang === "pl" ? "Kopiuj link" : "Copy link"}
             title="Share"
           >
             📋
+            {toast && (
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap animate-fade-out">
+                {lang === "pl" ? "Link skopiowany!" : "Link copied!"}
+              </span>
+            )}
           </button>
         </div>
       </div>

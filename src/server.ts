@@ -11,9 +11,7 @@ import { initializeDatabase } from "./db.js";
 import { createQueries } from "./queries.js";
 import { sanitizeSearchQuery, validateShelterId, validateUrl } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
-import { getVoivodeshipForCity } from "./city-voivodeship.js";
-import { computeAchievements } from "./achievements.js";
-import { computeDomination } from "./domination.js";
+
 
 dotenvConfig();
 
@@ -163,7 +161,7 @@ export function createApp(dbPath?: string) {
   );
 
   // JSON body parser (must be before POST routes)
-  app.use(express.json({ limit: "10mb" }));
+  app.use(express.json({ limit: "3mb" }));
 
   // Stats endpoint
   const lastFetchedStmt = db.prepare(`SELECT MAX(scraped_at) AS last_fetched FROM cats`);
@@ -568,52 +566,42 @@ export function createApp(dbPath?: string) {
     }
   });
 
-  // Domination endpoint
-  app.get("/api/domination", (_req, res) => {
+  // Lost cat reports
+  app.post("/api/report-lost-cat", (req, res) => {
+    const { name, description, image_url, last_seen_location, last_seen_city, contact_info } = req.body;
+    if (!name || !last_seen_city) {
+      res.status(400).json({ message: "Cat name and last seen city are required" });
+      return;
+    }
     try {
-      const shelters = queries.getAllShelters.all() as Array<{
-        id_zewnetrzne: number; name: string; city: string; voivodeship: string;
-        website_url: string | null; cat_count: number;
-      }>;
-      const cats = db.prepare(`
-        SELECT c.id, c.name, c.description, c.image_url, c.source_url,
-               c.shelter_id,
-               s.name AS shelter_name, s.city AS shelter_city
-        FROM cats c
-        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
-      `).all() as Array<{
-        id: number; name: string; description: string; image_url: string | null;
-        source_url: string | null; shelter_id: number; shelter_name: string; shelter_city: string;
-      }>;
-      const result = computeDomination(shelters, cats);
-      res.json(result);
+      const coords = getCityCoords(last_seen_city);
+      const lat = coords ? coords[0] + (Math.random() - 0.5) * 0.01 : 0;
+      const lng = coords ? coords[1] + (Math.random() - 0.5) * 0.01 : 0;
+      db.prepare(`
+        INSERT INTO lost_cats (name, description, image_url, latitude, longitude, city, contact_info, reported_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(name, description || "", image_url || null, lat, lng, last_seen_city, contact_info || null, new Date().toISOString());
+      res.json({ message: "Lost cat report submitted. We hope you find them soon!" });
     } catch {
-      res.json({
-        total_shelters_in_poland: 190,
-        shelters_covered: 0,
-        percentage: 0,
-        cats_in_army: 0,
-        domination_level: "Kocie Zwiadowcy",
-      });
+      res.status(500).json({ message: "Failed to save report" });
     }
   });
 
-  // Achievements endpoint
-  app.get("/api/achievements", (_req, res, _next) => {
+  app.get("/api/lost-cats", (_req, res, next) => {
     try {
-      const allCats = db.prepare(`
-        SELECT c.id, c.name, c.description, c.image_url, c.source_url,
-               c.sex, c.age, c.shelter_id,
-               s.name AS shelter_name, s.city AS shelter_city
-        FROM cats c
-        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
-      `).all();
-      const shelters = queries.getAllShelters.all();
-      const achievements = computeAchievements(allCats as any[], shelters as any[]);
-      res.json(achievements);
-    } catch {
-      res.json([]);
+      const lostCats = db.prepare(`SELECT * FROM lost_cats ORDER BY reported_at DESC`).all();
+      res.json(lostCats);
+    } catch (err) { next(err); }
+  });
+
+  app.delete("/api/admin/lost-cats/:id", requireAdminAuth, (req, res) => {
+    const id = parseInt(req.params.id as string);
+    if (isNaN(id)) {
+      res.status(400).json({ message: "Invalid ID" });
+      return;
     }
+    db.prepare(`DELETE FROM lost_cats WHERE id = ?`).run(id);
+    res.json({ message: "Deleted" });
   });
 
   // Health check endpoint — checks db.open instead of DATA_DIR access

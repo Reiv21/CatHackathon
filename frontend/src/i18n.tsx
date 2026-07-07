@@ -128,6 +128,19 @@ const translations = {
     showStrays: "Show stray reports",
     hideStrays: "Hide stray reports",
     strayReported: "Stray cat reported",
+
+    // Lost cat
+    lostCat: "Lost Cat",
+    lostCatTitle: "Report a Lost Cat",
+    lostCatSubtitle: "Lost your cat? Report it here and we'll show it on the map to help find them.",
+    catName: "Cat's name",
+    lastSeenCity: "Last seen city",
+    lastSeenLocation: "Last seen address/area (optional)",
+    contactInfo: "Contact info (phone or email)",
+    lostCatThanks: "Report submitted! We hope you find your cat soon.",
+    showLostCats: "Show lost cats",
+    hideLostCats: "Hide lost cats",
+    lostCatReported: "Lost cat reported",
   },
   pl: {
     home: "Start",
@@ -242,6 +255,19 @@ const translations = {
     showStrays: "Pokaż bezdomne koty",
     hideStrays: "Ukryj bezdomne koty",
     strayReported: "Zgłoszony bezdomny kot",
+
+    // Lost cat
+    lostCat: "Zaginiony kot",
+    lostCatTitle: "Zgłoś zaginionego kota",
+    lostCatSubtitle: "Zaginął Twój kot? Zgłoś go tutaj, a pokażemy go na mapie żeby pomóc go znaleźć.",
+    catName: "Imię kota",
+    lastSeenCity: "Miasto ostatniego widzenia",
+    lastSeenLocation: "Adres/okolica (opcjonalnie)",
+    contactInfo: "Dane kontaktowe (telefon lub email)",
+    lostCatThanks: "Zgłoszenie przyjęte! Mamy nadzieję, że szybko znajdziesz swojego kota.",
+    showLostCats: "Pokaż zaginione koty",
+    hideLostCats: "Ukryj zaginione koty",
+    lostCatReported: "Zgłoszony zaginiony kot",
   },
 };
 

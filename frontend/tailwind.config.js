@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -44,6 +45,16 @@ export default {
       borderRadius: {
         xl: "1rem",
         "2xl": "1.5rem",
+      },
+      keyframes: {
+        "fade-out": {
+          "0%": { opacity: "1" },
+          "70%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+      },
+      animation: {
+        "fade-out": "fade-out 2s ease-out forwards",
       },
     },
   },
