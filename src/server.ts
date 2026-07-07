@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { existsSync, readFileSync, writeFileSync, accessSync, constants } from "fs";
 import { config as dotenvConfig } from "dotenv";
 import crypto from "crypto";
-import { sanitizeSearchQuery, validateShelterId } from "./validation.js";
+import { sanitizeSearchQuery, validateShelterId, validateUrl } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
 import { getVoivodeshipForCity } from "./city-voivodeship.js";
 import { computeAchievements } from "./achievements.js";
@@ -502,6 +502,11 @@ export function createApp(dbPath?: string) {
     const { name, city, voivodeship, website_url, submitter_email } = req.body;
     if (!name || !city) {
       res.status(400).json({ message: "Name and city are required" });
+      return;
+    }
+    // Validate URL scheme to prevent javascript: and other executable schemes
+    if (!validateUrl(website_url)) {
+      res.status(400).json({ message: "Invalid URL scheme. Only http://, https://, and data: are allowed." });
       return;
     }
     const suggestion = {
