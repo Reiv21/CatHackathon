@@ -10,7 +10,7 @@ The application was scanned using [Aikido Security](https://www.aikido.dev/) —
 
 **Result: ✅ No security issues detected**
 
-> Screenshot of the Aikido scan report is available in `docs/screenshots/aikido-scan.png`
+> Aikido scan reports available in `docs/screenshots/1.png` and `docs/screenshots/2.png`
 
 ---
 
