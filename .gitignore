@@ -3,7 +3,9 @@ dist/
 frontend/node_modules/
 frontend/dist/
 *.db
+*.db-shm
+*.db-wal
 .env
 .DS_Store
-data/suggestions.json
-data/strays.json
+data/
+shelter-sync-export.sql
