@@ -49,10 +49,18 @@ const config: ScraperConfig = JSON.parse(readFileSync("./scraper-config.json", "
 
 function resolveUrl(base: string, relative: string | undefined | null): string | null {
   if (!relative) return null;
-  if (relative.startsWith("data:")) return null;
+  const trimmed = relative.trim().toLowerCase();
+  // Reject dangerous URL schemes
+  if (trimmed.startsWith("data:") || trimmed.startsWith("javascript:") || trimmed.startsWith("vbscript:")) return null;
   if (relative.startsWith("http")) return relative;
   if (relative.startsWith("//")) return "https:" + relative;
-  try { return new URL(relative, base).href; } catch { return null; }
+  try {
+    const resolved = new URL(relative, base).href;
+    const resolvedLower = resolved.toLowerCase();
+    // Double-check resolved URL doesn't have dangerous scheme
+    if (resolvedLower.startsWith("javascript:") || resolvedLower.startsWith("data:") || resolvedLower.startsWith("vbscript:")) return null;
+    return resolved;
+  } catch { return null; }
 }
 
 function getDomain(url: string): string {
