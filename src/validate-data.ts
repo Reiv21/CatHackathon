@@ -3,6 +3,7 @@
  * Removes entries that shouldn't be there.
  */
 import { readFileSync, writeFileSync } from "fs";
+import { stripControlChars } from "./validation.js";
 
 interface CatRecord {
   id: number;
@@ -117,9 +118,9 @@ filtered = filtered.map((c, i) => ({ ...c, id: i + 1 }));
 console.log(`Output: ${filtered.length} entries (removed ${cats.length - filtered.length})`);
 console.log(`\nProblems found: ${problems.length}`);
 if (problems.length > 0 && problems.length <= 50) {
-  problems.forEach((p) => console.log("  " + p));
+  problems.forEach((p) => console.log("  " + stripControlChars(p)));
 } else if (problems.length > 50) {
-  problems.slice(0, 30).forEach((p) => console.log("  " + p));
+  problems.slice(0, 30).forEach((p) => console.log("  " + stripControlChars(p)));
   console.log(`  ... and ${problems.length - 30} more`);
 }
 
@@ -128,7 +129,7 @@ console.log("\nPer city:");
 const byCity: Record<string, number> = {};
 filtered.forEach((c) => { byCity[c.shelter_city] = (byCity[c.shelter_city] || 0) + 1; });
 Object.entries(byCity).sort((a, b) => b[1] - a[1]).forEach(([city, count]) => {
-  console.log(`  ${city.padEnd(22)} ${count}`);
+  console.log(`  ${stripControlChars(city).padEnd(22)} ${count}`);
 });
 
 // Save

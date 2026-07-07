@@ -4,6 +4,7 @@
  */
 import { readFileSync } from "fs";
 import * as cheerio from "cheerio";
+import { stripControlChars } from "./validation.js";
 
 interface ShelterRecord {
   id_zewnetrzne: number;
@@ -64,7 +65,7 @@ async function diagnose(shelter: ShelterRecord) {
   console.log(`  Links found: ${uniqueLinks.length}`);
   console.log(`  Sample links with text:`);
   withText.slice(0, 8).forEach(l => {
-    console.log(`    "${l.text}" → ${l.href.replace(url, "")}`);
+    console.log(`    "${stripControlChars(l.text)}" → ${stripControlChars(l.href.replace(url, ""))}`);
   });
   
   // Count images
@@ -92,7 +93,7 @@ async function main() {
   console.log(`Diagnosing ${toCheck.length} shelters that returned 0...\n`);
 
   for (const shelter of toCheck) {
-    console.log(`${shelter.city} — ${shelter.website_url}`);
+    console.log(`${stripControlChars(shelter.city)} — ${stripControlChars(shelter.website_url || "")}`);
     await diagnose(shelter);
     console.log("");
   }

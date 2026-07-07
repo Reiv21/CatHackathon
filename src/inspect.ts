@@ -62,11 +62,11 @@ async function main() {
   console.log("━".repeat(80));
 
   for (const s of apiShelters) {
-    console.log(`  [${s.id}] ${s.nazwa}`);
-    console.log(`      📍 ${s.miasto}, ${s.wojewodztwo}`);
-    console.log(`      🌐 ${s.www || "(brak strony)"}`);
-    if (s.telefon) console.log(`      📞 ${s.telefon}`);
-    if (s.email) console.log(`      ✉️  ${s.email}`);
+    console.log(`  [${stripControlChars(s.id)}] ${stripControlChars(s.nazwa)}`);
+    console.log(`      📍 ${stripControlChars(s.miasto)}, ${stripControlChars(s.wojewodztwo)}`);
+    console.log(`      🌐 ${stripControlChars(s.www || "(brak strony)")}`);
+    if (s.telefon) console.log(`      📞 ${stripControlChars(s.telefon)}`);
+    if (s.email) console.log(`      ✉️  ${stripControlChars(s.email)}`);
     console.log();
   }
 
@@ -80,7 +80,7 @@ async function main() {
     console.log("━".repeat(80));
 
     for (const shelter of toScrape) {
-      console.log(`\n  Scraping: ${shelter.name} (${shelter.website_url})...`);
+      console.log(`\n  Scraping: ${stripControlChars(shelter.name)} (${stripControlChars(shelter.website_url || "")})...`);
       const cats = await scrapeCatsActivity(shelter.website_url!, shelter.id_zewnetrzne);
 
       if (cats.length === 0) {
@@ -90,8 +90,11 @@ async function main() {
         console.log(`    ✅ Found ${cats.length} cats:`);
         for (const cat of cats.slice(0, 10)) {
           console.log(`       🐈 ${stripControlChars(cat.name)}`);
-          if (cat.description) console.log(`          ${cat.description.slice(0, 80)}${cat.description.length > 80 ? "..." : ""}`);
-          if (cat.image_url) console.log(`          🖼️  ${cat.image_url}`);
+          if (cat.description) {
+            const sanitizedDesc = stripControlChars(cat.description);
+            console.log(`          ${sanitizedDesc.slice(0, 80)}${sanitizedDesc.length > 80 ? "..." : ""}`);
+          }
+          if (cat.image_url) console.log(`          🖼️  ${stripControlChars(cat.image_url)}`);
         }
         if (cats.length > 10) {
           console.log(`       ... and ${cats.length - 10} more`);

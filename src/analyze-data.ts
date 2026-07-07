@@ -1,4 +1,5 @@
 import { readFileSync } from "fs";
+import { stripControlChars } from "./validation.js";
 
 const cats = JSON.parse(readFileSync("./data/cats.json", "utf-8"));
 
@@ -12,7 +13,7 @@ cats.forEach((c: { shelter_city: string }) => {
 });
 const sorted = Object.entries(byCity).sort((a, b) => (b[1] as number) - (a[1] as number));
 console.log("Top cities:");
-sorted.slice(0, 15).forEach(([city, count]) => console.log("  ", city, ":", count));
+sorted.slice(0, 15).forEach(([city, count]) => console.log("  ", stripControlChars(city), ":", count));
 console.log("");
 
 // Quality checks
@@ -36,7 +37,7 @@ cats
   .filter((c: { name: string }) => c.name.length > 50 || /[!❤🚨📣]/.test(c.name))
   .slice(0, 15)
   .forEach((c: { shelter_city: string; name: string }) =>
-    console.log("  [" + c.shelter_city + "]", c.name.slice(0, 80))
+    console.log("  [" + stripControlChars(c.shelter_city) + "]", stripControlChars(c.name.slice(0, 80)))
   );
 
 console.log("");
@@ -45,5 +46,5 @@ cats
   .filter((c: { image_url: string | null }) => !c.image_url)
   .slice(0, 10)
   .forEach((c: { shelter_city: string; name: string }) =>
-    console.log("  [" + c.shelter_city + "]", c.name)
+    console.log("  [" + stripControlChars(c.shelter_city) + "]", stripControlChars(c.name))
   );

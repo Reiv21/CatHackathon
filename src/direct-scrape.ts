@@ -6,6 +6,7 @@
 import { readFileSync } from "fs";
 import { initializeDatabase, getSheltersWithWebsite, saveCats, upsertShelters, type Shelter } from "./db.js";
 import { scrapeCatsActivity } from "./activities.js";
+import { stripControlChars } from "./validation.js";
 
 const DB_PATH = "./shelter-sync.db";
 
@@ -92,7 +93,7 @@ async function main() {
 
   for (const shelter of uniqueShelters) {
     try {
-      console.log(`Scraping: ${shelter.name} (${shelter.city}) — ${shelter.url}`);
+      console.log(`Scraping: ${stripControlChars(shelter.name)} (${stripControlChars(shelter.city)}) — ${stripControlChars(shelter.url)}`);
       const cats = await scrapeCatsActivity(shelter.url, shelter.id);
       
       if (cats.length > 0) {
