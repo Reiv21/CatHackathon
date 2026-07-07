@@ -467,32 +467,12 @@ export function createApp(dbPath?: string) {
   });
 
   // Admin: delete stray report
-  app.delete("/api/admin/strays/:id", (req, res) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith("Bearer ")) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
+  app.delete("/api/admin/strays/:id", requireAdminAuth, (req, res) => {
     const straysPath = path.join(DATA_DIR, "strays.json");
     if (!existsSync(straysPath)) { res.json({ message: "Not found" }); return; }
     const strays = JSON.parse(readFileSync(straysPath, "utf-8")) as Array<{ id: number }>;
     const id = parseInt(req.params.id);
     const filtered = strays.filter((s) => s.id !== id);
-    writeFileSync(straysPath, JSON.stringify(filtered, null, 2));
-    res.json({ message: "Deleted" });
-  });
-
-  app.delete("/api/admin/strays/:id", (req, res) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith("Bearer ")) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-    const straysPath = path.join(DATA_DIR, "strays.json");
-    if (!existsSync(straysPath)) { res.json({ message: "Not found" }); return; }
-    const strays = JSON.parse(readFileSync(straysPath, "utf-8"));
-    const id = parseInt(req.params.id);
-    const filtered = strays.filter((s: { id: number }) => s.id !== id);
     writeFileSync(straysPath, JSON.stringify(filtered, null, 2));
     res.json({ message: "Deleted" });
   });
@@ -549,12 +529,7 @@ export function createApp(dbPath?: string) {
   });
 
   // Admin: get suggestions
-  app.get("/api/admin/suggestions", (req, res) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith("Bearer ")) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
+  app.get("/api/admin/suggestions", requireAdminAuth, (req, res) => {
     const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
     if (!existsSync(suggestionsPath)) {
       res.json([]);
@@ -564,12 +539,7 @@ export function createApp(dbPath?: string) {
   });
 
   // Admin: delete suggestion by index
-  app.delete("/api/admin/suggestions/:index", (req, res) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith("Bearer ")) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
+  app.delete("/api/admin/suggestions/:index", requireAdminAuth, (req, res) => {
     const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
     if (!existsSync(suggestionsPath)) {
       res.status(404).json({ message: "Not found" });

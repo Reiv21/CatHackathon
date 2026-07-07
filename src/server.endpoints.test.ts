@@ -4,6 +4,7 @@ import { createApp } from "./server.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync, renameSync, mkdirSync, rmSync } from "fs";
+import crypto from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,9 +15,12 @@ const DATA_DIR = path.resolve(__dirname, "../data");
  * Validates: Requirements 1.1, 1.2, 3.1, 3.2, 3.3, 3.5, 4.1, 4.7, 6.2, 6.6, 10.1, 10.3, 9.5
  */
 
-// Helper: generate a valid admin token (base64 of "admin:<timestamp>")
+// Helper: generate a properly signed admin token (base64 of "admin:<timestamp>:<signature>")
 function validAdminToken(): string {
-  return Buffer.from(`admin:${Date.now()}`).toString("base64");
+  const TOKEN_SECRET = process.env.TOKEN_SECRET || process.env.ADMIN_PASSWORD || "admin123";
+  const payload = `admin:${Date.now()}`;
+  const signature = crypto.createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+  return Buffer.from(`${payload}:${signature}`).toString("base64");
 }
 
 describe("POST /api/admin/sync", () => {
@@ -321,26 +325,28 @@ describe("GET /api/health", () => {
 
 describe("Auth middleware rejects unauthenticated requests (Req 9.5)", () => {
   /**
-   * Endpoints using requireAdminAuth middleware (full token validation):
+   * All admin endpoints now use requireAdminAuth middleware (full token validation):
    * - POST /api/admin/sync
    * - GET /api/admin/sync/status
-   *
-   * Endpoints using inline auth check (Bearer prefix only):
    * - GET /api/admin/suggestions
+   * - DELETE /api/admin/suggestions/:index
    * - DELETE /api/admin/strays/:id
+   * 
+   * The requireAdminAuth middleware validates:
+   * 1. Authorization header exists and starts with "Bearer "
+   * 2. Token is valid base64
+   * 3. Decoded token starts with "admin:"
+   * 4. Token signature is cryptographically valid (HMAC-SHA256)
    */
 
   const strictAdminEndpoints = [
     { method: "post" as const, path: "/api/admin/sync" },
     { method: "get" as const, path: "/api/admin/sync/status" },
-  ];
-
-  const simpleAdminEndpoints = [
     { method: "get" as const, path: "/api/admin/suggestions" },
     { method: "delete" as const, path: "/api/admin/strays/1" },
   ];
 
-  const allAdminEndpoints = [...strictAdminEndpoints, ...simpleAdminEndpoints];
+  const allAdminEndpoints = [...strictAdminEndpoints];
 
   for (const endpoint of allAdminEndpoints) {
     it(`rejects ${endpoint.method.toUpperCase()} ${endpoint.path} without any auth header`, async () => {
@@ -362,8 +368,8 @@ describe("Auth middleware rejects unauthenticated requests (Req 9.5)", () => {
     });
   }
 
-  // requireAdminAuth also validates the token content (must base64-decode to "admin:...")
-  for (const endpoint of strictAdminEndpoints) {
+  // requireAdminAuth validates the token content (must base64-decode to "admin:..." with valid signature)
+  for (const endpoint of allAdminEndpoints) {
     it(`rejects ${endpoint.method.toUpperCase()} ${endpoint.path} with invalid token content`, async () => {
       const { app } = createApp();
       const invalidToken = Buffer.from("user:fake").toString("base64");
