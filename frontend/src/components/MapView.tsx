@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import L from "leaflet";
 import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
-import { ShelterPin } from "./ShelterPin";
+import { MarkerCluster } from "./MarkerCluster";
 import { CatCard } from "./CatCard";
 import { NearestShelter } from "./NearestShelter";
 import { UserLocation } from "./UserLocation";
@@ -11,13 +10,6 @@ import { MapPersist } from "./MapPersist";
 import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
-
-// Fix Leaflet default marker icons in bundled builds
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "/marker-icon-2x.png",
-  iconUrl: "/marker-icon.png",
-  shadowUrl: "/marker-shadow.png",
-});
 
 export function MapView() {
   const { t, lang } = useI18n();
@@ -96,9 +88,9 @@ export function MapView() {
               </Popup>
             </CircleMarker>
           ))}
-          {shelters?.map((shelter) => (
-            <ShelterPin key={shelter.id_zewnetrzne} shelter={shelter} onSelect={() => setSelectedShelter(shelter)} />
-          ))}
+          {shelters && (
+            <MarkerCluster shelters={shelters} onSelect={setSelectedShelter} lang={lang} />
+          )}
         </MapContainer>
       </div>
 
