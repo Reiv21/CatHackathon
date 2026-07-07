@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "../i18n";
-import { safeUrl } from "../safeUrl";interface Suggestion {
+import { safeUrl } from "../safeUrl";
+
+interface Suggestion {
   name: string;
   city: string;
   voivodeship: string;

@@ -33,4 +33,38 @@ describe("API integration", () => {
       .send({ name: "" });
     expect(res.status).toBe(400);
   });
+
+  it("suggest shelter rejects javascript: URLs", async () => {
+    const res = await request(app)
+      .post("/api/suggest-shelter")
+      .send({ 
+        name: "Test Shelter", 
+        city: "Test City",
+        website_url: "javascript:alert('XSS')"
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain("Invalid URL scheme");
+  });
+
+  it("suggest shelter accepts valid http URLs", async () => {
+    const res = await request(app)
+      .post("/api/suggest-shelter")
+      .send({ 
+        name: "Test Shelter", 
+        city: "Test City",
+        website_url: "http://example.com"
+      });
+    expect(res.status).toBe(200);
+  });
+
+  it("suggest shelter accepts valid https URLs", async () => {
+    const res = await request(app)
+      .post("/api/suggest-shelter")
+      .send({ 
+        name: "Test Shelter", 
+        city: "Test City",
+        website_url: "https://example.com"
+      });
+    expect(res.status).toBe(200);
+  });
 });

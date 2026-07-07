@@ -46,3 +46,17 @@ export function stripControlChars(str: string): string {
     .replace(/\x1b[^[]/g, "")              // Other ESC sequences
     .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/g, ""); // C0/C1 controls (keep \t \n \r)
 }
+
+/**
+ * Validates a URL to ensure it uses a safe scheme (http, https, or data).
+ * Prevents javascript: and other executable schemes that could lead to XSS.
+ * Returns true if the URL is safe or null/empty, false otherwise.
+ */
+export function validateUrl(url: string | null | undefined): boolean {
+  if (!url) return true; // null/empty URLs are acceptable
+  const trimmed = url.trim().toLowerCase();
+  // Allow http://, https://, and data: schemes only
+  return trimmed.startsWith("http://") || 
+         trimmed.startsWith("https://") || 
+         trimmed.startsWith("data:");
+}
