@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import L from "leaflet";
 import { useShelters } from "../hooks/useShelters";
 import { useShelterCats } from "../hooks/useShelterCats";
 import { ShelterPin } from "./ShelterPin";
@@ -11,17 +10,6 @@ import { MapPersist } from "./MapPersist";
 import { useI18n } from "../i18n";
 import type { ShelterResponse } from "../types";
 import "leaflet/dist/leaflet.css";
-
-// Fix Leaflet default marker icons for retina displays
-L.Icon.Default.mergeOptions({
-  iconUrl: "/marker-icon.png",
-  iconRetinaUrl: "/marker-icon-2x.png",
-  shadowUrl: "/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 export function MapView() {
   const { t, lang } = useI18n();
@@ -174,7 +162,7 @@ export function MapView() {
 
         {selectedShelter && (
           <div>
-            <button onClick={() => setSelectedShelter(null)} aria-label={lang === "pl" ? "Powrót do mapy" : "Back to map"} className="text-sm text-primary-600 hover:text-primary-700 mb-3">
+            <button onClick={() => { setSelectedShelter(null); setSidebarExpanded(false); }} aria-label={lang === "pl" ? "Powrót do mapy" : "Back to map"} className="text-sm text-primary-600 hover:text-primary-700 mb-3">
               {t.backToMap}
             </button>
             <h3 className="font-display font-bold text-lg mb-1">{selectedShelter.name}</h3>
