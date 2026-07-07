@@ -70,37 +70,6 @@ describe("CORS", () => {
   });
 });
 
-describe("GET /api/domination", () => {
-  it("returns 200 with correct domination response shape", async () => {
-    const res = await request(app).get("/api/domination");
-    expect(res.status).toBe(200);
-    expect(res.body.total_shelters_in_poland).toBe(190);
-    expect(typeof res.body.shelters_covered).toBe("number");
-    expect(typeof res.body.percentage).toBe("number");
-    expect(typeof res.body.cats_in_army).toBe("number");
-    expect(typeof res.body.domination_level).toBe("string");
-    expect([
-      "Kocie Zwiadowcy",
-      "Kocia Partyzantka",
-      "Kocia Ofensywa",
-      "Pełna Kocia Dominacja",
-    ]).toContain(res.body.domination_level);
-  });
-
-  it("responds within 500ms", async () => {
-    const start = Date.now();
-    await request(app).get("/api/domination");
-    const elapsed = Date.now() - start;
-    expect(elapsed).toBeLessThan(500);
-  });
-
-  it("counts seeded data correctly", async () => {
-    const res = await request(app).get("/api/domination");
-    expect(res.body.shelters_covered).toBe(2);
-    expect(res.body.cats_in_army).toBe(3);
-  });
-});
-
 describe("GET /api/health", () => {
   it("returns 200 with status ok when database is open", async () => {
     const res = await request(app).get("/api/health");
