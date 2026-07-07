@@ -10,57 +10,13 @@ The application is deployed on a Raspberry Pi and automatically updated on every
 
 ## Screenshots
 
-> Place screenshots in `docs/screenshots/` folder.
+## Screenshots
 
-### Homepage
-`docs/screenshots/homepage.png`
-- Hero section with call-to-action buttons
-- Cat of the Day feature
-- Platform statistics (cats, shelters, voivodeships)
-- "Why adopt?" and "Want to help?" sections
+### Homepage & Cat of the Day
+![Homepage](screenshots/1.png)
 
-### Cat Search
-`docs/screenshots/cat-search.png`
-- Search bar with filters (region, sex, sort)
-- Paginated cat card grid
-- "Surprise Me" random cat button
-
-### Interactive Map
-`docs/screenshots/map-view.png`
-- Full-screen Leaflet map of Poland
-- Shelter pins with click-to-expand
-- Nearest shelter finder with GPS
-- Stray cat report overlay (red markers)
-
-### Cat Card Detail
-`docs/screenshots/cat-card.png`
-- Cat photo with lightbox zoom
-- Name, sex, age badges
-- Shelter location and link
-- Share button
-
-### Stray Cat Report Form
-`docs/screenshots/report-stray.png`
-- City selection dropdown
-- Description textarea
-- Photo upload with preview
-- GPS location capture button
-
-### Admin Dashboard
-`docs/screenshots/admin-panel.png`
-- Shelter suggestion management
-- Stray report management
-- Sync trigger and status
-
-### Mobile View
-`docs/screenshots/mobile-responsive.png`
-- Responsive hamburger menu
-- Full functionality on phone screens
-- Touch-friendly interface
-
-### Aikido Security Scan
-`docs/screenshots/aikido-scan.png`
-- Clean scan result (0 issues)
+### Interactive Map with Shelters
+![Map View](screenshots/2.png)
 
 ---
 
