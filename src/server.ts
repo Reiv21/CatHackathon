@@ -517,7 +517,7 @@ export function createApp(dbPath?: string) {
     const input = Buffer.from(String(password || ""));
     const expected = Buffer.from(ADMIN_PASSWORD);
     const isValid = input.length === expected.length &&
-      require("crypto").timingSafeEqual(input, expected);
+      crypto.timingSafeEqual(input, expected);
     if (isValid) {
       clearAttempts(ip);
       const token = generateAdminToken();
