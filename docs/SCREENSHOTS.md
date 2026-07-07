@@ -4,19 +4,34 @@
 
 🌐 **Visit the live application:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
 
-The application is deployed on a Raspberry Pi and automatically updated on every push to main.
+Works on desktop, tablet, and mobile. The application is deployed on a Raspberry Pi and automatically updated on every push to main.
 
 ---
 
-## Screenshots
+## App Screenshots
 
-## Screenshots
+### Homepage
+![Homepage](screenshots/homepage.png)
 
-### Homepage & Cat of the Day
-![Homepage](screenshots/1.png)
+### Cat Search with Filters
+![Cat Search](screenshots/cat-search.png)
 
-### Interactive Map with Shelters
-![Map View](screenshots/2.png)
+### Interactive Shelter Map
+![Map](screenshots/map.png)
+
+### Lost Cat Report Form
+![Lost Cat](screenshots/lost-cat.png)
+
+### Mobile View (Responsive)
+![Mobile](screenshots/mobile.png)
+
+---
+
+## Security Scan (Aikido)
+
+### Scan Results
+![Aikido Scan 1](screenshots/1.png)
+![Aikido Scan 2](screenshots/2.png)
 
 ---
 
@@ -30,13 +45,13 @@ The application is deployed on a Raspberry Pi and automatically updated on every
 4. Clicks a cat card → sees photo in lightbox
 5. Clicks "View on shelter page" → goes to shelter's adoption page
 
-### Flow 2: Reporting a Stray Cat
+### Flow 2: Reporting a Lost Cat
 
-1. User spots a homeless cat
-2. Navigates to "Report Stray" 
-3. Selects city, adds description and optional photo
-4. Optionally shares GPS location
-5. Submits → cat appears on the map for others to see
+1. User's cat goes missing
+2. Navigates to "Lost Cat" in Report menu
+3. Fills in cat name, description, last seen city, optional photo
+4. Submits → cat appears as yellow pin on the map
+5. Community members can see the report and help
 
 ### Flow 3: Using the Map
 
@@ -44,12 +59,11 @@ The application is deployed on a Raspberry Pi and automatically updated on every
 2. Clicks "Find Nearest" → grants GPS permission
 3. Sees 5 closest shelters with distances
 4. Clicks one → sidebar shows that shelter's available cats
-5. Can toggle stray cat reports layer to see reported strays nearby
+5. Can toggle stray/lost cat layers to see reported cats nearby
 
-### Flow 4: Admin Data Sync
+### Flow 4: Reporting a Stray Cat
 
-1. Admin navigates to #admin
-2. Enters password → dashboard appears
-3. Clicks "Trigger Sync" → Temporal workflow starts
-4. Each shelter is scraped independently (retries on failure)
-5. Fresh data appears in the app within minutes
+1. User spots a homeless cat
+2. Navigates to "Report Stray"
+3. Selects city, adds description and optional photo
+4. Submits → cat appears as red pin on the map for organizations to see

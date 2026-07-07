@@ -1,6 +1,6 @@
 # Mrucznik 🐱
 
-**Cat adoption and rescue platform for the "For the Cats" hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with a lost cat finder and stray cat reporting.
+**Cat adoption and rescue platform for the "For the Cats" hackathon** — aggregates cats available for adoption from shelters across Poland into one searchable, map-enabled platform with a lost cat finder and stray cat reporting. Fully responsive (mobile + desktop), bilingual (PL/EN), with dark mode.
 
 🌐 **Live:** [mrucznik.serwerigora.com](https://mrucznik.serwerigora.com)
 
