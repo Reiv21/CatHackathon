@@ -3,6 +3,7 @@ import { useSearchCats } from "../hooks/useSearchCats";
 import { CatCard } from "./CatCard";
 import { CatCardSkeletonGrid } from "./Skeletons";
 import { InlineError } from "./InlineError";
+import { safeUrl } from "../safeUrl";
 import { useI18n } from "../i18n";
 import { apiFetch } from "../api";
 import type { CatResponse } from "../types";
@@ -66,7 +67,7 @@ export function CatSearch() {
           <div className="p-4">
             <h3 className="font-display font-bold text-lg">{randomCat.name}</h3>
             <p className="text-xs text-gray-500">📍 {randomCat.shelter_city}</p>
-            {randomCat.source_url && <a href={randomCat.source_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600 mt-2 inline-block">{t.viewOnShelter}</a>}
+            {randomCat.source_url && <a href={safeUrl(randomCat.source_url)} target="_blank" rel="noreferrer" className="text-sm text-primary-600 mt-2 inline-block">{t.viewOnShelter}</a>}
             <button onClick={() => setRandomCat(null)} aria-label={lang === "pl" ? "Zamknij" : "Close"} className="block text-xs text-gray-500 mt-2">✕ {lang === "pl" ? "Zamknij" : "Close"}</button>
           </div>
         </div>

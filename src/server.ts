@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync, readFileSync, writeFileSync, accessSync, constants } from "fs";
 import { config as dotenvConfig } from "dotenv";
+import crypto from "crypto";
 import { sanitizeSearchQuery, validateShelterId } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
 import { getVoivodeshipForCity } from "./city-voivodeship.js";
@@ -21,6 +22,30 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_DIST = path.resolve(__dirname, "../frontend/dist");
 const DATA_DIR = path.resolve(__dirname, "../data");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const TOKEN_SECRET = process.env.TOKEN_SECRET || ADMIN_PASSWORD;
+
+/** Generate a signed admin token */
+function generateAdminToken(): string {
+  const payload = `admin:${Date.now()}`;
+  const signature = crypto.createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+  return Buffer.from(`${payload}:${signature}`).toString("base64");
+}
+
+/** Validate a signed admin token. Returns true if signature is valid. */
+function validateAdminToken(token: string): boolean {
+  try {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    const parts = decoded.split(":");
+    if (parts.length < 3 || parts[0] !== "admin") return false;
+    const timestamp = parts[1];
+    const providedSig = parts.slice(2).join(":");
+    const expectedPayload = `admin:${timestamp}`;
+    const expectedSig = crypto.createHmac("sha256", TOKEN_SECRET).update(expectedPayload).digest("hex");
+    return crypto.timingSafeEqual(Buffer.from(providedSig), Buffer.from(expectedSig));
+  } catch {
+    return false;
+  }
+}
 
 // Brute force protection
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -123,13 +148,7 @@ export function requireAdminAuth(
     return;
   }
   const token = auth.slice(7);
-  try {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    if (!decoded.startsWith("admin:")) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-  } catch {
+  if (!validateAdminToken(token)) {
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
@@ -516,7 +535,7 @@ export function createApp(dbPath?: string) {
       require("crypto").timingSafeEqual(input, expected);
     if (isValid) {
       clearAttempts(ip);
-      const token = Buffer.from(`admin:${Date.now()}`).toString("base64");
+      const token = generateAdminToken();
       res.json({ token });
     } else {
       recordAttempt(ip);

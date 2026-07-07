@@ -8,6 +8,7 @@
 import { fetchSheltersFromApi } from "./shelterApi.js";
 import { initializeDatabase, upsertShelters, getSheltersWithWebsite, saveCats, type Shelter } from "./db.js";
 import { scrapeCatsActivity } from "./activities.js";
+import { stripControlChars } from "./validation.js";
 
 const DB_PATH = "./shelter-sync.db";
 
@@ -88,7 +89,7 @@ async function main() {
         saveCats(db, shelter.id_zewnetrzne, cats);
         console.log(`    ✅ Found ${cats.length} cats:`);
         for (const cat of cats.slice(0, 10)) {
-          console.log(`       🐈 ${cat.name}`);
+          console.log(`       🐈 ${stripControlChars(cat.name)}`);
           if (cat.description) console.log(`          ${cat.description.slice(0, 80)}${cat.description.length > 80 ? "..." : ""}`);
           if (cat.image_url) console.log(`          🖼️  ${cat.image_url}`);
         }

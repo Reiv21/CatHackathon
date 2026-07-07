@@ -34,3 +34,15 @@ export function validateShelterId(raw: string): number | null {
 
   return parsed;
 }
+
+/**
+ * Strips terminal control characters (ANSI escapes, C0/C1 controls) from a string.
+ * Use before logging any externally-sourced data to prevent terminal injection.
+ */
+export function stripControlChars(str: string): string {
+  // Remove ANSI escape sequences and C0/C1 control characters (except newline/tab)
+  return str
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "") // ANSI CSI sequences
+    .replace(/\x1b[^[]/g, "")              // Other ESC sequences
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/g, ""); // C0/C1 controls (keep \t \n \r)
+}

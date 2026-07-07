@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "../i18n";
-
-interface Suggestion {
+import { safeUrl } from "../safeUrl";interface Suggestion {
   name: string;
   city: string;
   voivodeship: string;
@@ -122,7 +121,7 @@ export function Admin() {
                   <span className="text-xs text-gray-500">{new Date(s.submitted_at).toLocaleDateString()}</span>
                 </div>
                 <p className="text-sm text-gray-600">{s.city}{s.voivodeship && `, ${s.voivodeship}`}</p>
-                {s.website_url && <a href={s.website_url} target="_blank" rel="noreferrer" className="text-sm text-primary-600">{s.website_url}</a>}
+                {s.website_url && <a href={safeUrl(s.website_url)} target="_blank" rel="noreferrer" className="text-sm text-primary-600">{s.website_url}</a>}
                 {s.submitter_email && <p className="text-xs text-gray-500 mt-1">From: {s.submitter_email}</p>}
               </div>
               <button onClick={() => deleteSuggestion(i)} className="ml-3 text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 bg-red-50 rounded shrink-0">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CatResponse } from "../types";
 import { useI18n } from "../i18n";
+import { safeUrl } from "../safeUrl";
 
 interface CatCardProps {
   cat: CatResponse;
@@ -85,7 +86,7 @@ export function CatCard({ cat }: CatCardProps) {
         {/* Link + Share */}
         <div className="flex items-center gap-3 mt-3">
           {(cat.source_url || cat.shelter_url) && (
-            <a href={cat.source_url || cat.shelter_url || "#"} target="_blank" rel="noopener noreferrer"
+            <a href={safeUrl(cat.source_url || cat.shelter_url)} target="_blank" rel="noopener noreferrer"
               className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               {t.viewOnShelter}
             </a>

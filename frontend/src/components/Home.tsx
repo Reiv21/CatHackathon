@@ -3,6 +3,7 @@ import { apiFetch } from "../api";
 import { useI18n } from "../i18n";
 import type { CatResponse } from "../types";
 import { StatsSkeleton, CatOfDaySkeleton } from "./Skeletons";
+import { safeUrl } from "../safeUrl";
 import { InlineError } from "./InlineError";
 
 interface HomeProps {
@@ -92,7 +93,7 @@ export function Home({ onNavigate }: HomeProps) {
                 <h3 className="text-2xl font-display font-bold text-white">{catOfDay.name}</h3>
                 <p className="text-sm text-white/80 mt-1">📍 {catOfDay.shelter_city}</p>
                 {catOfDay.source_url && (
-                  <a href={catOfDay.source_url} target="_blank" rel="noreferrer"
+                  <a href={safeUrl(catOfDay.source_url)} target="_blank" rel="noreferrer"
                     className="inline-block mt-3 text-sm font-medium text-white bg-primary-600 px-4 py-1.5 rounded-full hover:bg-primary-700">
                     {t.meetMe}
                   </a>
