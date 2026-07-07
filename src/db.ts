@@ -14,6 +14,29 @@ export interface Cat {
   name: string;
   description: string;
   image_url: string | null;
+  source_url?: string | null;
+  sex?: string | null;
+  age?: string | null;
+}
+
+export interface StrayReport {
+  id?: number;
+  description: string;
+  image_url: string | null;
+  latitude: number;
+  longitude: number;
+  city: string;
+  reported_at: string;
+}
+
+export interface Suggestion {
+  id?: number;
+  name: string;
+  city: string;
+  voivodeship: string;
+  website_url: string | null;
+  submitter_email: string | null;
+  submitted_at: string;
 }
 
 export function initializeDatabase(dbPath?: string): Database.Database {
@@ -49,6 +72,54 @@ export function initializeDatabase(dbPath?: string): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_cats_shelter ON cats(shelter_id);
   `);
 
+  // Migrate cats table: add new columns if they don't exist
+  const catsColumns = db.prepare(`PRAGMA table_info(cats)`).all() as { name: string }[];
+  const catsColumnNames = catsColumns.map((col) => col.name);
+
+  if (!catsColumnNames.includes("source_url")) {
+    db.exec(`ALTER TABLE cats ADD COLUMN source_url TEXT`);
+  }
+  if (!catsColumnNames.includes("sex")) {
+    db.exec(`ALTER TABLE cats ADD COLUMN sex TEXT`);
+  }
+  if (!catsColumnNames.includes("age")) {
+    db.exec(`ALTER TABLE cats ADD COLUMN age TEXT`);
+  }
+
+  // Create stray_reports table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS stray_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      description TEXT NOT NULL DEFAULT '',
+      image_url TEXT,
+      latitude REAL NOT NULL DEFAULT 0,
+      longitude REAL NOT NULL DEFAULT 0,
+      city TEXT NOT NULL DEFAULT '',
+      reported_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Create suggestions table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS suggestions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      city TEXT NOT NULL,
+      voivodeship TEXT NOT NULL DEFAULT '',
+      website_url TEXT,
+      submitter_email TEXT,
+      submitted_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Create indexes for new tables
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_stray_reports_city ON stray_reports(city);
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_suggestions_city ON suggestions(city);
+  `);
+
   return db;
 }
 
@@ -82,8 +153,8 @@ export function upsertShelters(db: Database.Database, shelters: Shelter[]): void
 export function saveCats(db: Database.Database, shelterId: number, cats: Cat[]): void {
   const deleteStmt = db.prepare(`DELETE FROM cats WHERE shelter_id = ?`);
   const insertStmt = db.prepare(`
-    INSERT INTO cats (shelter_id, name, description, image_url, scraped_at)
-    VALUES (@shelter_id, @name, @description, @image_url, datetime('now'))
+    INSERT INTO cats (shelter_id, name, description, image_url, source_url, sex, age, scraped_at)
+    VALUES (@shelter_id, @name, @description, @image_url, @source_url, @sex, @age, datetime('now'))
   `);
 
   const replaceAll = db.transaction((items: Cat[]) => {
@@ -94,6 +165,9 @@ export function saveCats(db: Database.Database, shelterId: number, cats: Cat[]):
         name: cat.name,
         description: cat.description ?? "",
         image_url: cat.image_url,
+        source_url: cat.source_url ?? null,
+        sex: cat.sex ?? null,
+        age: cat.age ?? null,
       });
     }
   });

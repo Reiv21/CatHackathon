@@ -57,11 +57,35 @@ Add to `/etc/nginx/sites-available/default` (or a new file):
 location /cat-hackathon/ {
     proxy_pass http://127.0.0.1:3001/;
     proxy_http_version 1.1;
+
+    # WebSocket upgrade support
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection 'upgrade';
+
+    # Forward real client info to Express
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
+
     proxy_cache_bypass $http_upgrade;
+
+    # Forward security headers set by Express/helmet to the client.
+    # Without these directives, Nginx may strip upstream headers and
+    # security scanners will report missing protections.
+
+    # Content-Security-Policy — controls which resources the browser may load
+    proxy_pass_header Content-Security-Policy;
+
+    # Strict-Transport-Security — enforces HTTPS for future requests
+    proxy_pass_header Strict-Transport-Security;
+
+    # X-Frame-Options — legacy clickjacking protection (complemented by CSP frame-ancestors)
+    proxy_pass_header X-Frame-Options;
+
+    # X-Content-Type-Options — prevents MIME-type sniffing attacks
+    proxy_pass_header X-Content-Type-Options;
+
+    # Referrer-Policy — controls how much referrer info is sent with requests
+    proxy_pass_header Referrer-Policy;
 }
 ```
 
@@ -70,6 +94,14 @@ Then reload:
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+> **Note:** After any change to the Nginx config (e.g., adding `proxy_pass_header` directives for security headers), you must test and reload:
+>
+> ```bash
+> sudo nginx -t && sudo systemctl reload nginx
+> ```
+>
+> `nginx -t` validates the config syntax. If it reports OK, `systemctl reload` applies the changes without dropping active connections.
 
 ## 4. Cron Jobs (scraping + cat of the day)
 

@@ -3,9 +3,12 @@ import helmet from "helmet";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { existsSync, readFileSync, writeFileSync, accessSync, constants } from "fs";
+import { existsSync } from "fs";
 import { config as dotenvConfig } from "dotenv";
 import crypto from "crypto";
+import type Database from "better-sqlite3";
+import { initializeDatabase } from "./db.js";
+import { createQueries } from "./queries.js";
 import { sanitizeSearchQuery, validateShelterId, validateUrl } from "./validation.js";
 import { getCityCoords } from "./geocoding.js";
 import { getVoivodeshipForCity } from "./city-voivodeship.js";
@@ -20,7 +23,6 @@ const __dirname = path.dirname(__filename);
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const FRONTEND_DIST = path.resolve(__dirname, "../frontend/dist");
-const DATA_DIR = path.resolve(__dirname, "../data");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const TOKEN_SECRET = process.env.TOKEN_SECRET || ADMIN_PASSWORD;
 
@@ -71,38 +73,6 @@ function recordAttempt(ip: string): void {
 
 function clearAttempts(ip: string): void {
   loginAttempts.delete(ip);
-}
-
-interface ShelterRecord {
-  id_zewnetrzne: number;
-  name: string;
-  city: string;
-  voivodeship: string;
-  website_url: string | null;
-  cat_count: number;
-}
-
-interface CatRecord {
-  id: number;
-  name: string;
-  description: string;
-  image_url: string | null;
-  source_url: string | null;
-  shelter_id: number;
-  shelter_name: string;
-  shelter_city: string;
-}
-
-function loadShelters(): ShelterRecord[] {
-  const filePath = path.join(DATA_DIR, "shelters.json");
-  if (!existsSync(filePath)) return [];
-  return JSON.parse(readFileSync(filePath, "utf-8"));
-}
-
-function loadCats(): CatRecord[] {
-  const filePath = path.join(DATA_DIR, "cats.json");
-  if (!existsSync(filePath)) return [];
-  return JSON.parse(readFileSync(filePath, "utf-8"));
 }
 
 /**
@@ -156,6 +126,8 @@ export function requireAdminAuth(
 }
 
 export function createApp(dbPath?: string) {
+  const db = initializeDatabase(dbPath);
+  const queries = createQueries(db);
   const app = express();
   app.set("trust proxy", 1);
 
@@ -171,6 +143,7 @@ export function createApp(dbPath?: string) {
           imgSrc: ["'self'", "data:", "https:", "http:"],
           connectSrc: ["'self'", ...getTemporalConnectSrc()],
           frameSrc: ["'none'"],
+          frameAncestors: ["'none'"],
         },
       },
       hsts: { maxAge: 31536000, includeSubDomains: true },
@@ -193,25 +166,20 @@ export function createApp(dbPath?: string) {
   app.use(express.json({ limit: "10mb" }));
 
   // Stats endpoint
+  const lastFetchedStmt = db.prepare(`SELECT MAX(scraped_at) AS last_fetched FROM cats`);
+
   app.get("/api/stats", (_req, res, next) => {
     try {
-      const cats = loadCats();
-      const shelters = loadShelters();
-      const sheltersWithCats = new Set(cats.map((c) => c.shelter_id)).size;
-      
-      const catsPath = path.join(DATA_DIR, "cats.json");
-      let lastFetched: string | null = null;
-      try {
-        const { statSync } = require("fs");
-        const stat = statSync(catsPath);
-        lastFetched = stat.mtime.toISOString();
-      } catch {}
+      const totalCats = (queries.countCats.get() as { count: number }).count;
+      const totalShelters = (queries.countShelters.get() as { count: number }).count;
+      const sheltersWithCats = (queries.countSheltersWithCats.get() as { count: number }).count;
+      const lastFetchedRow = lastFetchedStmt.get() as { last_fetched: string | null };
 
       res.json({
-        totalCats: cats.length,
-        totalShelters: shelters.length,
+        totalCats,
+        totalShelters,
         sheltersWithCats,
-        lastFetched,
+        lastFetched: lastFetchedRow.last_fetched || null,
       });
     } catch (err) {
       next(err);
@@ -221,39 +189,36 @@ export function createApp(dbPath?: string) {
   // Cat of the day — deterministic based on date
   app.get("/api/cat-of-the-day", (_req, res, next) => {
     try {
-      const cats = loadCats().filter((c) => c.image_url);
+      const cats = queries.getCatsWithImages.all() as Array<{
+        id: number; name: string; description: string; image_url: string | null;
+        source_url: string | null; sex: string | null; age: string | null;
+        shelter_id: number; shelter_name: string; shelter_city: string;
+        shelter_url: string | null; shelter_voivodeship: string | null;
+      }>;
       if (cats.length === 0) {
         res.json(null);
         return;
       }
-      // Use today's date as seed for consistent daily pick
       const today = new Date();
       const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
       const index = seed % cats.length;
-      const shelters = loadShelters();
-      const cat = cats[index];
-      const shelter = shelters.find((s) => s.id_zewnetrzne === cat.shelter_id);
-      res.json({
-        ...cat,
-        shelter_url: shelter?.website_url || null,
-        shelter_voivodeship: shelter?.voivodeship || null,
-      });
+      res.json(cats[index]);
     } catch (err) {
       next(err);
     }
   });
 
-  // API Routes — read from JSON files (reloads on each request for live editing)
+  // API Routes
   app.get("/api/shelters", (_req, res, next) => {
     try {
-      const shelters = loadShelters();
-      const cats = loadCats();
+      const shelters = queries.getAllShelters.all() as Array<{
+        id_zewnetrzne: number; name: string; city: string; voivodeship: string;
+        website_url: string | null; cat_count: number;
+      }>;
       const withCoords = shelters.map((s) => {
         const coords = getCityCoords(s.city);
-        const catCount = cats.filter((c) => c.shelter_id === s.id_zewnetrzne).length;
         return {
           ...s,
-          cat_count: catCount,
           latitude: coords ? coords[0] : null,
           longitude: coords ? coords[1] : null,
         };
@@ -274,68 +239,70 @@ export function createApp(dbPath?: string) {
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 24));
 
-      let cats = loadCats();
-      const shelters = loadShelters();
+      // Build SQL dynamically with WHERE clauses for filtering
+      const conditions: string[] = [];
+      const params: Record<string, string | number> = {};
 
-      // Enrich cats with shelter URL and voivodeship
-      const enriched = cats.map((c) => {
-        const shelter = shelters.find((s) => s.id_zewnetrzne === c.shelter_id);
-        // For registry cats (shelter_id=0), try to find voivodeship by city
-        let voiv = shelter?.voivodeship || null;
-        if (!voiv && c.shelter_city) {
-          const matchingShelter = shelters.find(
-            (s) => s.city.toLowerCase() === c.shelter_city.toLowerCase()
-          );
-          if (matchingShelter) voiv = matchingShelter.voivodeship;
-          if (!voiv) voiv = getVoivodeshipForCity(c.shelter_city);
-        }
-        return {
-          ...c,
-          shelter_url: shelter?.website_url || null,
-          shelter_voivodeship: voiv,
-        };
-      });
-
-      let filtered = enriched;
-      
-      // Search filter
       if (search.length > 0) {
-        filtered = filtered.filter(
-          (c) =>
-            c.name.toLowerCase().includes(search) ||
-            c.shelter_city.toLowerCase().includes(search) ||
-            c.shelter_name.toLowerCase().includes(search)
-        );
+        conditions.push(`(LOWER(c.name) LIKE @search OR LOWER(s.city) LIKE @search OR LOWER(s.name) LIKE @search)`);
+        params.search = `%${search}%`;
       }
 
-      // Voivodeship filter
       if (voivodeship) {
-        filtered = filtered.filter(
-          (c) => c.shelter_voivodeship?.toLowerCase() === voivodeship.toLowerCase()
-        );
+        conditions.push(`LOWER(s.voivodeship) = @voivodeship`);
+        params.voivodeship = voivodeship.toLowerCase();
       }
 
-      // Sex filter
       if (sex === "male") {
-        filtered = filtered.filter((c) => c.sex === "samiec");
+        conditions.push(`c.sex = 'samiec'`);
       } else if (sex === "female") {
-        filtered = filtered.filter((c) => c.sex === "samica");
+        conditions.push(`c.sex = 'samica'`);
       }
 
-      // Sort
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      // Determine ORDER BY
+      let orderBy = "ORDER BY c.id";
       if (sort === "name") {
-        filtered.sort((a, b) => a.name.localeCompare(b.name, "pl"));
+        orderBy = "ORDER BY c.name COLLATE NOCASE";
       } else if (sort === "city") {
-        filtered.sort((a, b) => a.shelter_city.localeCompare(b.shelter_city, "pl"));
+        orderBy = "ORDER BY s.city COLLATE NOCASE";
       }
 
-      const total = filtered.length;
-      const totalPages = Math.ceil(total / limit);
       const offset = (page - 1) * limit;
-      const paginated = filtered.slice(offset, offset + limit);
+
+      // Count total matching records
+      const countSql = `
+        SELECT COUNT(*) AS total
+        FROM cats c
+        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
+        ${whereClause}
+      `;
+      const totalRow = db.prepare(countSql).get(params) as { total: number };
+      const total = totalRow.total;
+      const totalPages = Math.ceil(total / limit);
+
+      // Fetch paginated results
+      const dataSql = `
+        SELECT c.id, c.name, c.description, c.image_url, c.source_url,
+               c.sex, c.age, c.shelter_id,
+               s.name AS shelter_name, s.city AS shelter_city,
+               s.website_url AS shelter_url, s.voivodeship AS shelter_voivodeship
+        FROM cats c
+        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
+        ${whereClause}
+        ${orderBy}
+        LIMIT @limit OFFSET @offset
+      `;
+      const cats = db.prepare(dataSql).all({ ...params, limit, offset }) as Array<{
+        id: number; name: string; description: string; image_url: string | null;
+        source_url: string | null; sex: string | null; age: string | null;
+        shelter_id: number; shelter_name: string; shelter_city: string;
+        shelter_url: string | null; shelter_voivodeship: string | null;
+      }>;
 
       res.json({
-        cats: paginated,
+        cats,
         pagination: { page, limit, total, totalPages },
       });
     } catch (err) {
@@ -351,14 +318,15 @@ export function createApp(dbPath?: string) {
         return;
       }
 
-      const shelters = loadShelters();
-      const shelter = shelters.find((s) => s.id_zewnetrzne === shelterId);
-      if (!shelter) {
-        res.status(404).json({ message: "Shelter not found" });
-        return;
+      const cats = queries.getCatsByShelter.all(shelterId);
+      if (!cats || cats.length === 0) {
+        // Check if shelter exists
+        const shelter = db.prepare("SELECT id_zewnetrzne FROM shelters WHERE id_zewnetrzne = ?").get(shelterId);
+        if (!shelter) {
+          res.status(404).json({ message: "Shelter not found" });
+          return;
+        }
       }
-
-      const cats = loadCats().filter((c) => c.shelter_id === shelterId);
       res.json(cats);
     } catch (err) {
       next(err);
@@ -368,17 +336,15 @@ export function createApp(dbPath?: string) {
   // Random cat
   app.get("/api/random-cat", (_req, res, next) => {
     try {
-      const cats = loadCats().filter((c) => c.image_url);
+      const cats = queries.getCatsWithImages.all() as Array<{
+        id: number; name: string; description: string; image_url: string | null;
+        source_url: string | null; sex: string | null; age: string | null;
+        shelter_id: number; shelter_name: string; shelter_city: string;
+        shelter_url: string | null; shelter_voivodeship: string | null;
+      }>;
       if (cats.length === 0) { res.json(null); return; }
       const index = Math.floor(Math.random() * cats.length);
-      const shelters = loadShelters();
-      const cat = cats[index];
-      const shelter = shelters.find((s) => s.id_zewnetrzne === cat.shelter_id);
-      res.json({
-        ...cat,
-        shelter_url: shelter?.website_url || null,
-        shelter_voivodeship: shelter?.voivodeship || null,
-      });
+      res.json(cats[index]);
     } catch (err) { next(err); }
   });
 
@@ -409,13 +375,11 @@ export function createApp(dbPath?: string) {
       return;
     }
 
-    // Accept base64 data URIs directly, or regular URLs
     let fixedImageUrl = image_url || null;
 
     let lat = parseFloat(latitude) || 0;
     let lng = parseFloat(longitude) || 0;
 
-    // If no GPS, try geocoding: first hardcoded cities, then Nominatim (OpenStreetMap)
     if ((lat === 0 || isNaN(lat)) && (city || form_address)) {
       const searchQuery = form_address ? `${form_address}, ${city}, Poland` : `${city}, Poland`;
       const coords = getCityCoords(city);
@@ -423,7 +387,6 @@ export function createApp(dbPath?: string) {
         lat = coords[0] + (Math.random() - 0.5) * 0.01;
         lng = coords[1] + (Math.random() - 0.5) * 0.01;
       } else {
-        // Fallback: Nominatim geocoding (free, no API key needed)
         try {
           const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=pl`;
           const geoRes = await fetch(url, { headers: { "User-Agent": "Mrucznik-CatHackathon/1.0" } });
@@ -438,42 +401,36 @@ export function createApp(dbPath?: string) {
       }
     }
 
-    const report = {
-      id: Date.now(),
-      description: description || "",
-      image_url: fixedImageUrl,
-      latitude: lat,
-      longitude: lng,
-      city: city || "",
-      reported_at: new Date().toISOString(),
-    };
-
-    const straysPath = path.join(DATA_DIR, "strays.json");
-    let strays: unknown[] = [];
-    if (existsSync(straysPath)) {
-      strays = JSON.parse(readFileSync(straysPath, "utf-8"));
+    try {
+      queries.insertStrayReport.run({
+        description: description || "",
+        image_url: fixedImageUrl,
+        latitude: lat,
+        longitude: lng,
+        city: city || "",
+        reported_at: new Date().toISOString(),
+      });
+      res.json({ message: "Report submitted. Thank you for helping!" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to save report" });
     }
-    strays.push(report);
-    writeFileSync(straysPath, JSON.stringify(strays, null, 2));
-    res.json({ message: "Report submitted. Thank you for helping!" });
   });
 
   app.get("/api/strays", (_req, res, next) => {
     try {
-      const straysPath = path.join(DATA_DIR, "strays.json");
-      if (!existsSync(straysPath)) { res.json([]); return; }
-      res.json(JSON.parse(readFileSync(straysPath, "utf-8")));
+      const strays = queries.getAllStrays.all();
+      res.json(strays);
     } catch (err) { next(err); }
   });
 
   // Admin: delete stray report
   app.delete("/api/admin/strays/:id", requireAdminAuth, (req, res) => {
-    const straysPath = path.join(DATA_DIR, "strays.json");
-    if (!existsSync(straysPath)) { res.json({ message: "Not found" }); return; }
-    const strays = JSON.parse(readFileSync(straysPath, "utf-8")) as Array<{ id: number }>;
-    const id = parseInt(req.params.id);
-    const filtered = strays.filter((s) => s.id !== id);
-    writeFileSync(straysPath, JSON.stringify(filtered, null, 2));
+    const id = parseInt(req.params.id as string);
+    if (isNaN(id)) {
+      res.status(400).json({ message: "Invalid ID" });
+      return;
+    }
+    queries.deleteStray.run(id);
     res.json({ message: "Deleted" });
   });
 
@@ -484,25 +441,23 @@ export function createApp(dbPath?: string) {
       res.status(400).json({ message: "Name and city are required" });
       return;
     }
-    // Validate URL scheme to prevent javascript: and other executable schemes
     if (!validateUrl(website_url)) {
       res.status(400).json({ message: "Invalid URL scheme. Only http://, https://, and data: are allowed." });
       return;
     }
-    const suggestion = {
-      name, city, voivodeship: voivodeship || "", website_url: website_url || null,
-      submitter_email: submitter_email || null,
-      submitted_at: new Date().toISOString(),
-    };
-    // Append to suggestions file
-    const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-    let suggestions = [];
-    if (existsSync(suggestionsPath)) {
-      suggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
+    try {
+      queries.insertSuggestion.run({
+        name,
+        city,
+        voivodeship: voivodeship || "",
+        website_url: website_url || null,
+        submitter_email: submitter_email || null,
+        submitted_at: new Date().toISOString(),
+      });
+      res.json({ message: "Thank you! Your suggestion has been submitted for review." });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to save suggestion" });
     }
-    suggestions.push(suggestion);
-    writeFileSync(suggestionsPath, JSON.stringify(suggestions, null, 2));
-    res.json({ message: "Thank you! Your suggestion has been submitted for review." });
   });
 
   // Admin login
@@ -513,7 +468,6 @@ export function createApp(dbPath?: string) {
       return;
     }
     const { password } = req.body;
-    // Timing-safe comparison to prevent timing attacks
     const input = Buffer.from(String(password || ""));
     const expected = Buffer.from(ADMIN_PASSWORD);
     const isValid = input.length === expected.length &&
@@ -529,30 +483,23 @@ export function createApp(dbPath?: string) {
   });
 
   // Admin: get suggestions
-  app.get("/api/admin/suggestions", requireAdminAuth, (req, res) => {
-    const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-    if (!existsSync(suggestionsPath)) {
-      res.json([]);
-      return;
+  app.get("/api/admin/suggestions", requireAdminAuth, (_req, res) => {
+    try {
+      const suggestions = queries.getAllSuggestions.all();
+      res.json(suggestions);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to load suggestions" });
     }
-    res.json(JSON.parse(readFileSync(suggestionsPath, "utf-8")));
   });
 
-  // Admin: delete suggestion by index
-  app.delete("/api/admin/suggestions/:index", requireAdminAuth, (req, res) => {
-    const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-    if (!existsSync(suggestionsPath)) {
+  // Admin: delete suggestion by id
+  app.delete("/api/admin/suggestions/:id", requireAdminAuth, (req, res) => {
+    const id = parseInt(req.params.id as string);
+    if (isNaN(id)) {
       res.status(404).json({ message: "Not found" });
       return;
     }
-    const suggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
-    const index = parseInt(req.params.index);
-    if (isNaN(index) || index < 0 || index >= suggestions.length) {
-      res.status(404).json({ message: "Not found" });
-      return;
-    }
-    suggestions.splice(index, 1);
-    writeFileSync(suggestionsPath, JSON.stringify(suggestions, null, 2));
+    queries.deleteSuggestion.run(id);
     res.json({ message: "Deleted" });
   });
 
@@ -574,7 +521,7 @@ export function createApp(dbPath?: string) {
     }
   });
 
-  // Sync status endpoint — queries Temporal for most recent shelter-sync-* workflow
+  // Sync status endpoint
   app.get("/api/admin/sync/status", requireAdminAuth, async (_req, res) => {
     try {
       const { Connection, Client } = await import("@temporalio/client");
@@ -582,7 +529,6 @@ export function createApp(dbPath?: string) {
       const connection = await Connection.connect({ address: temporalAddress });
       const client = new Client({ connection });
 
-      // List workflows matching the shelter-sync- prefix, sorted by start time desc
       const workflows = client.workflow.list({
         query: 'WorkflowId STARTS_WITH "shelter-sync-"',
       });
@@ -594,10 +540,7 @@ export function createApp(dbPath?: string) {
       } | null = null;
 
       for await (const workflow of workflows) {
-        // Take only the first (most recent) result
         const statusNum = workflow.status.code;
-        // Temporal status codes:
-        // 1 = RUNNING, 2 = COMPLETED, 3 = FAILED, 4 = CANCELLED, 5 = TERMINATED, 6 = CONTINUED_AS_NEW, 7 = TIMED_OUT
         let status: "running" | "completed" | "failed";
         if (statusNum === 1) {
           status = "running";
@@ -628,8 +571,20 @@ export function createApp(dbPath?: string) {
   // Domination endpoint
   app.get("/api/domination", (_req, res) => {
     try {
-      const shelters = loadShelters();
-      const cats = loadCats();
+      const shelters = queries.getAllShelters.all() as Array<{
+        id_zewnetrzne: number; name: string; city: string; voivodeship: string;
+        website_url: string | null; cat_count: number;
+      }>;
+      const cats = db.prepare(`
+        SELECT c.id, c.name, c.description, c.image_url, c.source_url,
+               c.shelter_id,
+               s.name AS shelter_name, s.city AS shelter_city
+        FROM cats c
+        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
+      `).all() as Array<{
+        id: number; name: string; description: string; image_url: string | null;
+        source_url: string | null; shelter_id: number; shelter_name: string; shelter_city: string;
+      }>;
       const result = computeDomination(shelters, cats);
       res.json(result);
     } catch {
@@ -644,32 +599,37 @@ export function createApp(dbPath?: string) {
   });
 
   // Achievements endpoint
-  app.get("/api/achievements", (_req, res, next) => {
+  app.get("/api/achievements", (_req, res, _next) => {
     try {
-      const cats = loadCats();
-      const shelters = loadShelters();
-      const achievements = computeAchievements(cats, shelters);
+      const allCats = db.prepare(`
+        SELECT c.id, c.name, c.description, c.image_url, c.source_url,
+               c.sex, c.age, c.shelter_id,
+               s.name AS shelter_name, s.city AS shelter_city
+        FROM cats c
+        JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
+      `).all();
+      const shelters = queries.getAllShelters.all();
+      const achievements = computeAchievements(allCats as any[], shelters as any[]);
       res.json(achievements);
     } catch {
       res.json([]);
     }
   });
 
-  // Health check endpoint
+  // Health check endpoint — checks db.open instead of DATA_DIR access
   app.get("/api/health", (_req, res) => {
-    try {
-      accessSync(DATA_DIR, constants.R_OK);
+    if (db.open) {
       res.json({
         status: "ok",
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
       });
-    } catch {
+    } else {
       res.status(503).json({
         status: "degraded",
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
-        details: "Data directory is inaccessible",
+        details: "Database connection is closed",
       });
     }
   });
@@ -721,7 +681,7 @@ export function createApp(dbPath?: string) {
     }
   );
 
-  return { app, db: null as unknown };
+  return { app, db };
 }
 
 /**
@@ -730,7 +690,7 @@ export function createApp(dbPath?: string) {
  * - After timeout: force-closes remaining connections, exits with code 0
  * - On second signal during shutdown: immediately exits with code 1
  */
-export function setupGracefulShutdown(server: import("http").Server): void {
+export function setupGracefulShutdown(server: import("http").Server, db?: Database.Database): void {
   let shuttingDown = false;
   const connections = new Set<import("net").Socket>();
 
@@ -741,7 +701,6 @@ export function setupGracefulShutdown(server: import("http").Server): void {
 
   const shutdown = () => {
     if (shuttingDown) {
-      // Second signal — force exit
       process.exit(1);
       return;
     }
@@ -749,14 +708,15 @@ export function setupGracefulShutdown(server: import("http").Server): void {
     console.log("Graceful shutdown initiated");
 
     server.close(() => {
+      if (db) db.close();
       process.exit(0);
     });
 
-    // Force-close after 10s
     const timeout = setTimeout(() => {
       for (const socket of connections) {
         socket.destroy();
       }
+      if (db) db.close();
       process.exit(0);
     }, 10_000);
     timeout.unref();
@@ -772,10 +732,11 @@ if (
   (process.argv[1].endsWith("server.ts") ||
     process.argv[1].endsWith("server.js"))
 ) {
-  const { app } = createApp();
+  const DB_PATH = process.env.DB_PATH || path.resolve(__dirname, "../shelter-sync.db");
+  const { app, db } = createApp(DB_PATH);
   const server = app.listen(PORT, () => {
     console.log(`🐱 Tactical Cat API running on port ${PORT}`);
-    console.log(`   Reading data from: ${DATA_DIR}`);
+    console.log(`   Using database: ${DB_PATH}`);
   });
-  setupGracefulShutdown(server);
+  setupGracefulShutdown(server, db);
 }

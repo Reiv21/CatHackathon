@@ -1,9 +1,6 @@
 import { initializeDatabase, upsertShelters, getSheltersWithWebsite, saveCats, type Shelter, type Cat } from "./db.js";
 import { fetchSheltersFromApi } from "./shelterApi.js";
 import * as cheerio from "cheerio";
-import { writeFileSync, renameSync } from "fs";
-import { tmpdir } from "os";
-import { join, resolve } from "path";
 
 const DB_PATH = "./shelter-sync.db";
 
@@ -124,81 +121,6 @@ export async function saveCatsActivity(shelterId: number, cats: Cat[]): Promise<
   const db = initializeDatabase(DB_PATH);
   try {
     saveCats(db, shelterId, cats);
-  } finally {
-    db.close();
-  }
-}
-
-/**
- * Writes JSON data to a file atomically using write-to-temp + rename pattern.
- * If rename fails, the original file remains unchanged.
- */
-export function atomicWriteJSON(targetPath: string, data: unknown): void {
-  const tmpPath = join(tmpdir(), `export-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
-  writeFileSync(tmpPath, JSON.stringify(data, null, 2));
-  renameSync(tmpPath, targetPath);
-}
-
-/**
- * Exports shelter and cat data from SQLite to JSON files in data/ directory.
- * Uses atomic writes (write-to-temp + rename) so partial failures leave existing files intact.
- */
-export async function exportDataActivity(): Promise<{ shelters: number; cats: number }> {
-  const db = initializeDatabase(DB_PATH);
-  try {
-    // Query shelters with cat_count
-    const shelters = db.prepare(`
-      SELECT s.id_zewnetrzne, s.name, s.city, s.voivodeship, s.website_url,
-             COUNT(c.id) AS cat_count
-      FROM shelters s
-      LEFT JOIN cats c ON c.shelter_id = s.id_zewnetrzne
-      GROUP BY s.id_zewnetrzne
-      ORDER BY s.city
-    `).all();
-
-    // Query cats joined with shelter data
-    const cats = db.prepare(`
-      SELECT c.id, c.name, c.description, c.image_url, c.shelter_id,
-             s.name AS shelter_name, s.city AS shelter_city
-      FROM cats c
-      JOIN shelters s ON s.id_zewnetrzne = c.shelter_id
-      ORDER BY s.city, c.name
-    `).all() as Array<{
-      id: number;
-      name: string;
-      description: string;
-      image_url: string | null;
-      shelter_id: number;
-      shelter_name: string;
-      shelter_city: string;
-    }>;
-
-    // Add fields required by the export schema that aren't in the DB
-    const catsWithFullSchema = cats.map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      description: cat.description,
-      image_url: cat.image_url,
-      source_url: null as string | null,
-      shelter_id: cat.shelter_id,
-      shelter_name: cat.shelter_name,
-      shelter_city: cat.shelter_city,
-      sex: null as string | null,
-      age: null as string | null,
-    }));
-
-    const dataDir = resolve("./data");
-    const sheltersPath = join(dataDir, "shelters.json");
-    const catsPath = join(dataDir, "cats.json");
-
-    // Write both temp files first, then rename both atomically.
-    // If any rename fails, previously existing files remain intact.
-    atomicWriteJSON(sheltersPath, shelters);
-    atomicWriteJSON(catsPath, catsWithFullSchema);
-
-    console.log(`Exported ${shelters.length} shelters and ${catsWithFullSchema.length} cats to data/`);
-
-    return { shelters: shelters.length, cats: catsWithFullSchema.length };
   } finally {
     db.close();
   }

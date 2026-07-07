@@ -1,13 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createApp } from "./server.js";
-import path from "path";
-import { fileURLToPath } from "url";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, "../data");
+import type Database from "better-sqlite3";
+import type { Express } from "express";
 
 /**
  * Security tests for authentication bypass vulnerability (CVE-PENTEST-2024-001)
@@ -30,7 +25,7 @@ const DATA_DIR = path.resolve(__dirname, "../data");
 /**
  * Helper: Generate a properly signed admin token by logging in
  */
-async function getValidAdminToken(app: Express.Application): Promise<string> {
+async function getValidAdminToken(app: Express): Promise<string> {
   const res = await request(app)
     .post("/api/admin/login")
     .send({ password: process.env.ADMIN_PASSWORD || "admin123" });
@@ -86,33 +81,56 @@ function createForgedTokens(): Array<{ name: string; token: string }> {
   ];
 }
 
+/**
+ * Seed test stray reports into the in-memory DB.
+ */
+function seedTestStrays(db: Database.Database, strays: Array<{ id?: number; description: string; city: string }>) {
+  const insert = db.prepare(`
+    INSERT INTO stray_reports (description, image_url, latitude, longitude, city, reported_at)
+    VALUES (@description, NULL, 52.23, 21.01, @city, datetime('now'))
+  `);
+  for (const stray of strays) {
+    insert.run({ description: stray.description, city: stray.city });
+  }
+}
+
+/**
+ * Seed test suggestions into the in-memory DB.
+ */
+function seedTestSuggestions(db: Database.Database, suggestions: Array<{ name: string; city: string }>) {
+  const insert = db.prepare(`
+    INSERT INTO suggestions (name, city, voivodeship, website_url, submitter_email, submitted_at)
+    VALUES (@name, @city, '', NULL, NULL, datetime('now'))
+  `);
+  for (const s of suggestions) {
+    insert.run({ name: s.name, city: s.city });
+  }
+}
+
 describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", () => {
-  let app: Express.Application;
+  let app: Express;
+  let db: Database.Database;
 
   beforeEach(() => {
     const result = createApp();
     app = result.app;
-    
-    // Ensure data directory exists for tests
-    if (!existsSync(DATA_DIR)) {
-      mkdirSync(DATA_DIR, { recursive: true });
-    }
+    db = result.db;
   });
 
   describe("DELETE /api/admin/strays/:id - Previously vulnerable endpoint", () => {
+    let strayIds: number[];
+
     beforeEach(() => {
-      // Setup test data
-      const straysPath = path.join(DATA_DIR, "strays.json");
-      const testStrays = [
-        { id: 1, description: "Test stray 1", location: "Test location 1" },
-        { id: 2, description: "Test stray 2", location: "Test location 2" },
-        { id: 999, description: "Test stray 999", location: "Test location 999" },
-      ];
-      writeFileSync(straysPath, JSON.stringify(testStrays, null, 2));
+      seedTestStrays(db, [
+        { description: "Test stray 1", city: "Location 1" },
+        { description: "Test stray 2", city: "Location 2" },
+        { description: "Test stray 999", city: "Location 999" },
+      ]);
+      strayIds = (db.prepare("SELECT id FROM stray_reports ORDER BY id").all() as { id: number }[]).map(r => r.id);
     });
 
     it("rejects request with no Authorization header", async () => {
-      const res = await request(app).delete("/api/admin/strays/1");
+      const res = await request(app).delete(`/api/admin/strays/${strayIds[0]}`);
       
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("Unauthorized");
@@ -120,7 +138,7 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
 
     it("rejects request with non-Bearer authorization", async () => {
       const res = await request(app)
-        .delete("/api/admin/strays/1")
+        .delete(`/api/admin/strays/${strayIds[0]}`)
         .set("Authorization", "Basic sometoken");
       
       expect(res.status).toBe(401);
@@ -129,67 +147,59 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
 
     it("rejects all forged Bearer tokens", async () => {
       const forgedTokens = createForgedTokens();
+      const targetId = strayIds[2]; // "Test stray 999"
       
       for (const { name, token } of forgedTokens) {
         const res = await request(app)
-          .delete("/api/admin/strays/999")
+          .delete(`/api/admin/strays/${targetId}`)
           .set("Authorization", token);
         
         expect(res.status, `Failed for: ${name}`).toBe(401);
         expect(res.body.message, `Failed for: ${name}`).toBe("Unauthorized");
         
         // Verify the stray was NOT deleted (data integrity check)
-        const straysPath = path.join(DATA_DIR, "strays.json");
-        const strays = JSON.parse(readFileSync(straysPath, "utf-8"));
-        const stray999 = strays.find((s: { id: number }) => s.id === 999);
-        expect(stray999, `Stray was deleted with forged token: ${name}`).toBeDefined();
+        const row = db.prepare("SELECT id FROM stray_reports WHERE id = ?").get(targetId) as { id: number } | undefined;
+        expect(row, `Stray was deleted with forged token: ${name}`).toBeDefined();
       }
     });
 
     it("accepts request with valid signed token from login", async () => {
       const validToken = await getValidAdminToken(app);
+      const targetId = strayIds[0]; // "Test stray 1"
       
       const res = await request(app)
-        .delete("/api/admin/strays/1")
+        .delete(`/api/admin/strays/${targetId}`)
         .set("Authorization", `Bearer ${validToken}`);
       
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("Deleted");
       
       // Verify the stray was actually deleted
-      const straysPath = path.join(DATA_DIR, "strays.json");
-      const strays = JSON.parse(readFileSync(straysPath, "utf-8"));
-      const stray1 = strays.find((s: { id: number }) => s.id === 1);
-      expect(stray1).toBeUndefined();
+      const row = db.prepare("SELECT id FROM stray_reports WHERE id = ?").get(targetId) as { id: number } | undefined;
+      expect(row).toBeUndefined();
     });
 
     it("prevents destructive write with forged token (data integrity)", async () => {
-      const straysPath = path.join(DATA_DIR, "strays.json");
-      const beforeStrays = JSON.parse(readFileSync(straysPath, "utf-8"));
-      const beforeCount = beforeStrays.length;
+      const beforeCount = (db.prepare("SELECT COUNT(*) AS count FROM stray_reports").get() as { count: number }).count;
       
       // Attempt deletion with forged token
       const forgedToken = `Bearer ${Buffer.from("admin:12345:fakesig").toString("base64")}`;
       await request(app)
-        .delete("/api/admin/strays/2")
+        .delete(`/api/admin/strays/${strayIds[1]}`)
         .set("Authorization", forgedToken);
       
       // Verify data was NOT modified
-      const afterStrays = JSON.parse(readFileSync(straysPath, "utf-8"));
-      expect(afterStrays.length).toBe(beforeCount);
-      expect(afterStrays).toEqual(beforeStrays);
+      const afterCount = (db.prepare("SELECT COUNT(*) AS count FROM stray_reports").get() as { count: number }).count;
+      expect(afterCount).toBe(beforeCount);
     });
   });
 
   describe("GET /api/admin/suggestions - Previously vulnerable endpoint", () => {
     beforeEach(() => {
-      // Setup test data
-      const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-      const testSuggestions = [
-        { name: "Test Shelter 1", city: "Warsaw", submitted_at: "2024-01-01T00:00:00.000Z" },
-        { name: "Test Shelter 2", city: "Krakow", submitted_at: "2024-01-02T00:00:00.000Z" },
-      ];
-      writeFileSync(suggestionsPath, JSON.stringify(testSuggestions, null, 2));
+      seedTestSuggestions(db, [
+        { name: "Test Shelter 1", city: "Warsaw" },
+        { name: "Test Shelter 2", city: "Krakow" },
+      ]);
     });
 
     it("rejects request with no Authorization header", async () => {
@@ -232,26 +242,25 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
         .set("Authorization", forgedToken);
       
       expect(res.status).toBe(401);
-      // Should not return suggestions data
       expect(Array.isArray(res.body)).toBe(false);
       expect(res.body.message).toBe("Unauthorized");
     });
   });
 
   describe("DELETE /api/admin/suggestions/:index - Previously vulnerable endpoint", () => {
+    let suggestionIds: number[];
+
     beforeEach(() => {
-      // Setup test data
-      const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-      const testSuggestions = [
-        { name: "Test Shelter 1", city: "Warsaw", submitted_at: "2024-01-01T00:00:00.000Z" },
-        { name: "Test Shelter 2", city: "Krakow", submitted_at: "2024-01-02T00:00:00.000Z" },
-        { name: "Test Shelter 3", city: "Gdansk", submitted_at: "2024-01-03T00:00:00.000Z" },
-      ];
-      writeFileSync(suggestionsPath, JSON.stringify(testSuggestions, null, 2));
+      seedTestSuggestions(db, [
+        { name: "Test Shelter 1", city: "Warsaw" },
+        { name: "Test Shelter 2", city: "Krakow" },
+        { name: "Test Shelter 3", city: "Gdansk" },
+      ]);
+      suggestionIds = (db.prepare("SELECT id FROM suggestions ORDER BY id").all() as { id: number }[]).map(r => r.id);
     });
 
     it("rejects request with no Authorization header", async () => {
-      const res = await request(app).delete("/api/admin/suggestions/0");
+      const res = await request(app).delete(`/api/admin/suggestions/${suggestionIds[0]}`);
       
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("Unauthorized");
@@ -262,16 +271,15 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
       
       for (const { name, token } of forgedTokens) {
         const res = await request(app)
-          .delete("/api/admin/suggestions/0")
+          .delete(`/api/admin/suggestions/${suggestionIds[0]}`)
           .set("Authorization", token);
         
         expect(res.status, `Failed for: ${name}`).toBe(401);
         expect(res.body.message, `Failed for: ${name}`).toBe("Unauthorized");
         
         // Verify the suggestion was NOT deleted
-        const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-        const suggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
-        expect(suggestions.length, `Suggestion was deleted with forged token: ${name}`).toBe(3);
+        const count = (db.prepare("SELECT COUNT(*) AS count FROM suggestions").get() as { count: number }).count;
+        expect(count, `Suggestion was deleted with forged token: ${name}`).toBe(3);
       }
     });
 
@@ -279,34 +287,33 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
       const validToken = await getValidAdminToken(app);
       
       const res = await request(app)
-        .delete("/api/admin/suggestions/0")
+        .delete(`/api/admin/suggestions/${suggestionIds[0]}`)
         .set("Authorization", `Bearer ${validToken}`);
       
       expect(res.status).toBe(200);
       expect(res.body.message).toBe("Deleted");
       
       // Verify the suggestion was actually deleted
-      const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-      const suggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
-      expect(suggestions.length).toBe(2);
-      expect(suggestions[0].name).toBe("Test Shelter 2");
+      const count = (db.prepare("SELECT COUNT(*) AS count FROM suggestions").get() as { count: number }).count;
+      expect(count).toBe(2);
+      
+      // Verify the right one was deleted (first one gone, second remains)
+      const remaining = db.prepare("SELECT name FROM suggestions ORDER BY id").all() as { name: string }[];
+      expect(remaining[0].name).toBe("Test Shelter 2");
     });
 
     it("prevents destructive write with forged token (data integrity)", async () => {
-      const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-      const beforeSuggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
-      const beforeCount = beforeSuggestions.length;
+      const beforeCount = (db.prepare("SELECT COUNT(*) AS count FROM suggestions").get() as { count: number }).count;
       
       // Attempt deletion with forged token
       const forgedToken = `Bearer ${Buffer.from("admin:99999:fakesignature").toString("base64")}`;
       await request(app)
-        .delete("/api/admin/suggestions/1")
+        .delete(`/api/admin/suggestions/${suggestionIds[1]}`)
         .set("Authorization", forgedToken);
       
       // Verify data was NOT modified
-      const afterSuggestions = JSON.parse(readFileSync(suggestionsPath, "utf-8"));
-      expect(afterSuggestions.length).toBe(beforeCount);
-      expect(afterSuggestions).toEqual(beforeSuggestions);
+      const afterCount = (db.prepare("SELECT COUNT(*) AS count FROM suggestions").get() as { count: number }).count;
+      expect(afterCount).toBe(beforeCount);
     });
   });
 
@@ -368,10 +375,9 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
 
   describe("Token signature validation", () => {
     it("rejects token with valid format but invalid signature", async () => {
-      // Create a token with correct structure but wrong signature
       const timestamp = Date.now();
       const payload = `admin:${timestamp}`;
-      const wrongSignature = "0".repeat(64); // 64 zeros instead of real HMAC
+      const wrongSignature = "0".repeat(64);
       const forgedToken = Buffer.from(`${payload}:${wrongSignature}`).toString("base64");
       
       const res = await request(app)
@@ -385,7 +391,6 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
     it("rejects token with signature computed using wrong secret", async () => {
       const timestamp = Date.now();
       const payload = `admin:${timestamp}`;
-      // Use a different secret to compute signature
       const crypto = await import("crypto");
       const wrongSignature = crypto.createHmac("sha256", "wrong_secret").update(payload).digest("hex");
       const forgedToken = Buffer.from(`${payload}:${wrongSignature}`).toString("base64");
@@ -421,18 +426,18 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
 
   describe("No information leakage in error responses", () => {
     const sensitivePatterns = [
-      /at\s+\w+\s*\(/i,           // Stack trace
-      /Error:\s/i,                // Error details
-      /\/home\//i,                // File paths
-      /\/usr\//i,                 // System paths
-      /\/src\//i,                 // Source paths
-      /node_modules/i,            // Dependencies
-      /\.ts\b/i,                  // TypeScript files
-      /\.js:/i,                   // JS files with line numbers
-      /ADMIN_PASSWORD/i,          // Config values
-      /TOKEN_SECRET/i,            // Config values
-      /TEMPORAL_ADDRESS/i,        // Config values
-      /process\.env/i,            // Environment references
+      /at\s+\w+\s*\(/i,
+      /Error:\s/i,
+      /\/home\//i,
+      /\/usr\//i,
+      /\/src\//i,
+      /node_modules/i,
+      /\.ts\b/i,
+      /\.js:/i,
+      /ADMIN_PASSWORD/i,
+      /TOKEN_SECRET/i,
+      /TEMPORAL_ADDRESS/i,
+      /process\.env/i,
     ];
 
     it("401 responses contain no sensitive information", async () => {
@@ -457,7 +462,6 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
           expect(responseText, `Leaked info in ${endpoint.method.toUpperCase()} ${endpoint.path}`).not.toMatch(pattern);
         }
         
-        // Response should only contain generic message
         expect(res.body).toEqual({ message: "Unauthorized" });
       }
     });
@@ -466,15 +470,15 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
   describe("Exploit scenario reproduction", () => {
     it("reproduces pentest Step 1: DELETE /api/admin/strays/:id with Bearer prefix only", async () => {
       // Setup: Create a stray record
-      const straysPath = path.join(DATA_DIR, "strays.json");
-      const testStrays = [
-        { id: 42, description: "Critical stray", location: "Important location" },
-      ];
-      writeFileSync(straysPath, JSON.stringify(testStrays, null, 2));
+      db.prepare(`
+        INSERT INTO stray_reports (description, image_url, latitude, longitude, city, reported_at)
+        VALUES ('Critical stray', NULL, 52.23, 21.01, 'Important location', datetime('now'))
+      `).run();
+      const row = db.prepare("SELECT id FROM stray_reports WHERE description = 'Critical stray'").get() as { id: number };
       
       // Attack: Try to delete with just "Bearer " prefix (no validation)
       const res = await request(app)
-        .delete("/api/admin/strays/42")
+        .delete(`/api/admin/strays/${row.id}`)
         .set("Authorization", "Bearer anything_goes_here");
       
       // Verify: Attack is blocked
@@ -482,18 +486,15 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
       expect(res.body.message).toBe("Unauthorized");
       
       // Verify: Data is NOT deleted
-      const strays = JSON.parse(readFileSync(straysPath, "utf-8"));
-      expect(strays.length).toBe(1);
-      expect(strays[0].id).toBe(42);
+      const count = (db.prepare("SELECT COUNT(*) AS count FROM stray_reports WHERE id = ?").get(row.id) as { count: number }).count;
+      expect(count).toBe(1);
     });
 
     it("reproduces pentest Step 2: GET /api/admin/suggestions with Bearer prefix only", async () => {
       // Setup: Create sensitive suggestions
-      const suggestionsPath = path.join(DATA_DIR, "suggestions.json");
-      const testSuggestions = [
-        { name: "Sensitive Shelter", city: "Secret City", submitter_email: "secret@example.com" },
-      ];
-      writeFileSync(suggestionsPath, JSON.stringify(testSuggestions, null, 2));
+      seedTestSuggestions(db, [
+        { name: "Sensitive Shelter", city: "Secret City" },
+      ]);
       
       // Attack: Try to read with just "Bearer " prefix
       const res = await request(app)
@@ -510,14 +511,12 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
     });
 
     it("reproduces pentest Step 3: forged admin: prefix token", async () => {
-      // Attack: Create token with admin: prefix but no valid signature
       const forgedToken = Buffer.from("admin:12345").toString("base64");
       
       const res = await request(app)
         .get("/api/admin/suggestions")
         .set("Authorization", `Bearer ${forgedToken}`);
       
-      // Verify: Attack is blocked (signature validation fails)
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("Unauthorized");
     });
@@ -537,7 +536,6 @@ describe("Security: Authentication Bypass Mitigation (CVE-PENTEST-2024-001)", ()
         const res = await request(app)[endpoint.method](endpoint.path)
           .set("Authorization", `Bearer ${forgedToken}`);
         
-        // All endpoints should reject the forged token
         expect(res.status, `${endpoint.method.toUpperCase()} ${endpoint.path}`).toBe(401);
         expect(res.body.message, `${endpoint.method.toUpperCase()} ${endpoint.path}`).toBe("Unauthorized");
       }

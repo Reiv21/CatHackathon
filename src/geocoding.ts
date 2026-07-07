@@ -131,5 +131,8 @@ export const CITY_COORDS: Record<string, [number, number]> = {
  * Get coordinates for a city. Returns [lat, lng] or null if not found.
  */
 export function getCityCoords(city: string): [number, number] | null {
+  if (!Object.prototype.hasOwnProperty.call(CITY_COORDS, city)) {
+    return null;
+  }
   return CITY_COORDS[city] ?? null;
 }

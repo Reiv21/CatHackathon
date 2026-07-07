@@ -11,9 +11,6 @@
     "scrape": "tsx src/scrape-all.ts",
     "scrape-only": "tsx src/scraper-v4.ts",
     "validate": "tsx src/validate-data.ts",
-    "scrape-fast": "tsx src/scraper-v2.ts",
-    "scrape-legacy": "tsx src/direct-scrape.ts",
-    "export-data": "tsx src/export-data.ts",
     "test": "vitest --run"
   },
   "dependencies": {

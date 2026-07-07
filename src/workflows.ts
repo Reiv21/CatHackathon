@@ -9,7 +9,6 @@ interface FetchActivities {
 
 interface SaveActivities {
   saveCatsActivity(shelterId: number, cats: Cat[]): Promise<void>;
-  exportDataActivity(): Promise<{ shelters: number; cats: number }>;
 }
 
 // Scraper/fetch activities: 60s timeout, exponential backoff (1s base, coefficient 2)
@@ -22,7 +21,7 @@ const fetchActivities = proxyActivities<FetchActivities>({
   },
 });
 
-// Save/export activities: 30s timeout, exponential backoff (1s base, coefficient 2)
+// Save activities: 30s timeout, exponential backoff (1s base, coefficient 2)
 const saveActivities = proxyActivities<SaveActivities>({
   startToCloseTimeout: "30s",
   retry: {
@@ -47,9 +46,6 @@ export async function parentSyncWorkflow(): Promise<void> {
 
   // Step 3: Await all child workflows before completing
   await Promise.all(childWorkflows);
-
-  // Step 4: Export data from SQLite to JSON after all scrapers finish
-  await saveActivities.exportDataActivity();
 }
 
 export async function catScraperWorkflow(url: string, shelterId: number): Promise<void> {
